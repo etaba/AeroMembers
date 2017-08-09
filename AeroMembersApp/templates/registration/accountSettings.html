@@ -1,0 +1,23 @@
+<h2>Account Settings</h2>
+
+  <h3>LinkedIn</h3>
+  {% if linkedin_login %}
+    <p>Connected as <a href="https://linkedin.com/{{ linkedin_login.extra_data.login }}/" target="_blank">{{ linkedin_login }}</a></p>
+      <form method="post" action="{% url 'social:disconnect' 'linkedin-oauth2' %}">
+        {% csrf_token %}
+        <button type="submit">Disconnect from LinkedIn</button>
+      </form>
+  {% else %}
+    <a href="{% url 'social:begin' 'linkedin-oauth2' %}">Connect to LinkedIn</a>
+  {% endif %}
+
+  <h3>Facebook</h3>
+  {% if facebook_login %}
+    <p>Connected as <a href="https://facebook.com/{{ facebook_login.extra_data.id }}/" target="_blank">{{ facebook_login }}</a></p>
+      <form method="post" action="{% url 'social:disconnect' 'facebook' %}">
+        {% csrf_token %}
+        <button type="submit">Disconnect from Facebook</button>
+      </form>
+  {% else %}
+    <a href="{% url 'social:begin' 'facebook' %}">Connect to Facebook</a>
+  {% endif %}

@@ -15,19 +15,29 @@
 			<div class="collapse navbar-collapse header-row" id="bs-example-navbar-collapse-1">
 				<ul class="nav navbar-nav navbar-right">
 					<li class="dropdown">
-						<a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false"><font class="secondary-color">More <span class="caret"></span></font></a>
+						<a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false"><font class="secondary-color">About <span class="caret"></span></font></a>
 						<ul class="dropdown-menu">
 							<li ><a href="/termsOfService">Terms of Service</a></li>
 							<li><a href="#" onClick="alert('For questions or concerns email ???')">Contact</a></li>
-							<li role="separator" class="divider"></li>
 						</ul>
 					</li>
+					{% if user.is_authenticated %}
+					<li>
+						<a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false"><font class="secondary-color">Hello {{ user.first_name }} {{ user.last_name }}<span class="caret"></span></font></a>
+						<ul class="dropdown-menu">
+							<li ><a href="/accountsettings">Account Settings</a></li>
+							<li><a href="#" >Profile</a></li>
+							<li><a href="/signout">Sign Out</a></li>
+						</ul>
+					</li>
+					{% else %}
 					<li>
 						<a href="/login" role="button" ><font class="secondary-color">Sign In </font></a>
 					</li>
 					<li>
 						<a href="/signup" role="button" ><font class="secondary-color">Sign Up </font></a>
 					</li>
+					{% endif %}
 				</ul>
 			</div>
 			<!-- /.navbar-collapse -->

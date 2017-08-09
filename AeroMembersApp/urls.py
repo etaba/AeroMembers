@@ -7,9 +7,9 @@ from . import views
 urlpatterns = [
     url(r'^$', views.index, name='index'),
     url(r'^signup/', views.signup, name='signup'),
-    url(r'^login/$', auth_views.login, name='login'),
-    url(r'^logout/$', auth_views.logout, name='logout'),
+    url(r'^signin/$', views.signin, name='signin'),
     url(r'^oauth/', include('social_django.urls', namespace='social')),
-    url(r'^settings/$', views.settings, name='settings'),
-    url(r'^settings/password/$', views.password, name='password'),
+    url(r'^accountsettings/$', views.accountSettings, name='accountsettings'),
+    url(r'^accountsettings/password/$', views.password, name='password'),
+    url(r'^signout/', views.signout, name='signout'),
 ]
