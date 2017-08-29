@@ -1,7 +1,12 @@
-<h2>Sign up</h2>
+  
+  <a href="{% url 'social:begin' 'facebook' %}">Sign up with Facebook</a>
+  <a href="{% url 'social:begin' 'linkedin-oauth2' %}">Sign up with LinkedIn</a>
+  <a href="{% url 'social:begin' 'google-oauth2' %}">Google+</a>
+  <br>
+<p><strong>-- OR --</strong></p>
   <form method="post">
     {% csrf_token %}
-    {% for field in form %}
+    {% for field in userForm %}
       <p>
         {{ field.label_tag }}<br>
         {{ field }}
@@ -13,9 +18,44 @@
         {% endfor %}
       </p>
     {% endfor %}
+    <p>The following fields are optional, but will help us customize your AeroMember experience. </p>
+
+    <p>
+        {{ profileForm.birthdate.label_tag }}<br>
+        {{ profileForm.birthdate }}
+        {% if profileForm.birthdate.help_text %}
+          <small style="color: grey">{{ profileForm.birthdate.help_text }}</small>
+        {% endif %}
+        {% for error in profileForm.birthdate.errors %}
+          <p style="color: red">{{ error }}</p>
+        {% endfor %}
+      </p>
+
+    {% for field in contactForm %}
+      <p>
+        {{ field.label_tag }}<br>
+        {{ field }}
+        {% if field.help_text %}
+          <small style="color: grey">{{ field.help_text }}</small>
+        {% endif %}
+        {% for error in field.errors %}
+          <p style="color: red">{{ error }}</p>
+        {% endfor %}
+      </p>
+    {% endfor %}
+
+    <p>
+        {{ profileForm.private.label_tag }}<br>
+        {{ profileForm.private }}
+        {% if profileForm.private.help_text %}
+          <small style="color: grey">{{ profileForm.private.help_text }}</small>
+        {% endif %}
+        {% for error in profileForm.private.errors %}
+          <p style="color: red">{{ error }}</p>
+        {% endfor %}
+      </p>
+
+    <html>
     <button type="submit">Sign up</button>
+    <div>By registering, you agree to the <a target="_blank" href="/termsofservice">Terms of Service</a> and <a target="_blank" href="/privacy">Privacy Policy</a>
   </form>
-  <br>
-  <p><strong>-- OR --</strong></p>
-  <a href="{% url 'social:begin' 'facebook' %}">Sign up with Facebook</a>
-  <a href="{% url 'social:begin' 'linkedin-oauth2' %}">Sign up with LinkedIn</a>

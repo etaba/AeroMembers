@@ -4,8 +4,11 @@ from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import AdminPasswordChangeForm, PasswordChangeForm
 from django.contrib import messages
-from forms import SignUpForm
+from forms import *
 from social_django.models import UserSocialAuth
+from django.forms.formsets import formset_factory
+from django.contrib.auth.backends import ModelBackend
+#from AeroMembersApp.forms import *
 
 from pprint import pprint
 
@@ -16,20 +19,40 @@ def index(request):
     return render(request, 'index.html');
 
 def signup(request):
+    #CompanyFormset = formset_factory(CompanyForm, extra = )
     if request.method == 'POST':
-        form = SignUpForm(request.POST)
-        if form.is_valid():
-            user = form.save()
-            user.refresh_from_db()  # load the profile instance created by the signal
-            user.profile.birth_date = form.cleaned_data.get('birth_date')
+        userForm = UserForm(request.POST)
+        profileForm = ProfileForm(request.POST)
+        contactForm = ContactForm(request.POST)
+        if userForm.is_valid() and profileForm.is_valid() and contactForm.is_valid():
+            user = User.objects.create_user(userForm.cleaned_data.get('username'),userForm.cleaned_data.get('email'),userForm.cleaned_data.get('password'))
+            user.first_name=userForm.cleaned_data.get('first_name')
+            user.last_name=userForm.cleaned_data.get('last_name')
             user.save()
-            raw_password = form.cleaned_data.get('password1')
-            user = authenticate(username=user.username, password=raw_password)
-            login(request, user)
-            return redirect('index')
+            profile = profileForm.save(commit=False)
+            profile.user = user
+            profile.save()
+            contact = contactForm.save(commit=False)
+            contact.user = user
+            contact.save()
+            #user.refresh_from_db()  # load the profile instance created by the signal
+            #user.profile.birth_date = userForm.cleaned_data.get('birth_date')
+            #user.save()
+            user = authenticate(username=user.username, password=userForm.cleaned_data.get('password'))
+            if user is not None:
+                login(request, user)
+                return redirect('index')
+            else:
+                print "not authed!!\n\n\n\n"
+
     else:
-        form = SignUpForm()
-    return render(request, 'registration/signup.html', {'form': form})
+        userForm = UserForm()
+        profileForm = ProfileForm()
+        contactForm = ContactForm()
+
+    return render(request, 'registration/signup.html', {'userForm': userForm,
+                                                        'profileForm':profileForm,
+                                                        'contactForm':contactForm})
 
 @login_required
 def accountSettings(request):
@@ -55,6 +78,15 @@ def accountSettings(request):
 
 @login_required
 def password(request):
+    fbTest = request.user.social_auth.get(provider='facebook')
+    print 'social_details:'
+    pprint(fbTest.social_details)
+    print 'get_username:'
+    pprint(fbTest.get_username())
+    print 'extra_data:'
+    pprint(fbTest.extra_data)
+    print 'user_details:'
+    pprint(fbTest.user_details)
     if request.user.has_usable_password():
         PasswordForm = PasswordChangeForm
     else:
@@ -72,6 +104,12 @@ def password(request):
     else:
         form = PasswordForm(request.user)
     return render(request, 'registration/password.html', {'form': form})
+
+def termsOfService(request):
+    return render(request, 'termsOfService.html');
+
+def privacy(request):
+    return render(request, 'privacy.html');
 
 def signout(request):
     logout(request)

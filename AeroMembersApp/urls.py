@@ -12,4 +12,7 @@ urlpatterns = [
     url(r'^accountsettings/$', views.accountSettings, name='accountsettings'),
     url(r'^accountsettings/password/$', views.password, name='password'),
     url(r'^signout/', views.signout, name='signout'),
+    url(r'^termsofservice/$', views.termsOfService, name='termsofservice'),
+    url(r'^privacy/$', views.privacy, name='privacy'),
+
 ]
