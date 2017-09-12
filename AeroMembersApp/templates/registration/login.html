@@ -1,4 +1,6 @@
-
+{% extends "base.html" %}
+{%block content%}
+{%include 'header.html'%}
   <h2>Login</h2>
   <form method="post">
     {% csrf_token %}
@@ -9,6 +11,8 @@
   <p><strong>-- OR --</strong></p>
   <a href="{% url 'social:begin' 'facebook' %}">Login with Facebook</a>
   <a href="{% url 'social:begin' backend='linkedin-oauth2' %}">Login with LinkedIn</a>
+  <a href="{% url 'social:begin' backend='google-oauth2' %}">Login with Google</a>
   <br>
   <br>
   <a href="/signup"><p><strong>Don't have an account? Sign Up</strong></p></a>
+{%endblock%}

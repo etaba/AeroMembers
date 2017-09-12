@@ -67,13 +67,13 @@ TEMPLATES = [
                 'django.contrib.messages.context_processors.messages',
                 'social_django.context_processors.backends',
                 'social_django.context_processors.login_redirect',
+                'AeroMembersApp.contextProcessor.company',
             ],
         },
     },
 ]
 
 WSGI_APPLICATION = 'AeroMembers.wsgi.application'
-
 
 # Database
 # https://docs.djangoproject.com/en/1.10/ref/settings/#databases
@@ -118,11 +118,13 @@ SOCIAL_AUTH_FACEBOOK_KEY = '929387930535453'
 SOCIAL_AUTH_FACEBOOK_SECRET = '3d525a12d0547a5121e6be2e8c180f28' #TODO: separate this in production
 SOCIAL_AUTH_LINKEDIN_OAUTH2_KEY = '86a1vc8dvtt8c1'
 SOCIAL_AUTH_LINKEDIN_OAUTH2_SECRET = 'XmqMu1g3lWqIwKnq'
+SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = '944435014653-956p3ku952th9lane3qc47s9e389tnka.apps.googleusercontent.com'
+SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = 'Wipng0QKr3fkL_bJyGLMGDNg'
 SOCIAL_AUTH_LOGIN_ERROR_URL = '/accountsettings/'
-#SOCIAL_AUTH_LOGIN_REDIRECT_URL = 'index'
+SOCIAL_AUTH_LOGIN_REDIRECT_URL = 'index'
 SOCIAL_AUTH_RAISE_EXCEPTIONS = True
 SOCIAL_AUTH_UID_LENGTH = 223 #mysql table index length restriction
-SOCIAL_AUTH_NEW_USER_REDIRECT_URL = '/accountsettings/password/'
+#SOCIAL_AUTH_NEW_USER_REDIRECT_URL = '/'
 
 SOCIAL_AUTH_PIPELINE = (
     'social_core.pipeline.social_auth.social_details',
@@ -130,15 +132,16 @@ SOCIAL_AUTH_PIPELINE = (
     'social_core.pipeline.social_auth.social_user',
     'social_core.pipeline.user.get_username',
     'social_core.pipeline.user.create_user',
+    'social_core.pipeline.user.user_details',
+    'AeroMembersApp.pipeline.complete_profile',
     'social_core.pipeline.social_auth.associate_user',
     'social_core.pipeline.social_auth.load_extra_data',
-    'social_core.pipeline.user.user_details',
-    'social_core.pipeline.social_auth.associate_by_email',
 )
 
 LOGIN_URL = 'login'
 LOGOUT_URL = 'index'
 LOGIN_REDIRECT_URL='index'
+
 
 # Internationalization
 # https://docs.djangoproject.com/en/1.10/topics/i18n/

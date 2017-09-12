@@ -26,7 +26,7 @@
 						<a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false"><font class="secondary-color">Hello {{ user.first_name }} {{ user.last_name }}<span class="caret"></span></font></a>
 						<ul class="dropdown-menu">
 							<li ><a href="/accountsettings">Account Settings</a></li>
-							<li><a href="#" >Profile</a></li>
+							<li><a href="/editprofile" >Profile</a></li>
 							<li><a href="/signout">Sign Out</a></li>
 						</ul>
 					</li>
@@ -38,6 +38,15 @@
 						<a href="/signup" role="button" ><font class="secondary-color">Sign Up </font></a>
 					</li>
 					{% endif %}
+					<li>
+						<a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false"><font class="secondary-color">Company<span class="caret"></span></font></a>
+						<ul class="dropdown-menu">
+							{% for c in companies %}
+							<li ><a href="#">{{ c.company }}</a></li>
+							{% endfor %}
+							<li ><a href="/companyregistration">Add New Company</a>
+						</ul>
+					</li>
 				</ul>
 			</div>
 			<!-- /.navbar-collapse -->

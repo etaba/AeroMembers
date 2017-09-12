@@ -4,7 +4,10 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.db.models.signals import post_save
 from django.dispatch import receiver
-# Create your models here.
+
+User._meta.get_field('email')._unique = True
+User._meta.get_field('email')._null = False
+
 
 INDUSTRY_CHOICES = (
 	("Accommodation and Food Services","Accommodation and Food Services"),
@@ -57,7 +60,7 @@ def __str__(self):
     return '%s %s' % (self.user.first_name, self.user.last_name)
 
 class Contact(models.Model):
-	profile = models.ForeignKey('Profile',on_delete=models.CASCADE, unique=True, null=True)
+	user = models.ForeignKey(User,on_delete=models.CASCADE, unique=True, null=True)
 	company = models.ForeignKey('Company',on_delete=models.CASCADE, unique=True, null=True)
 	street_address = models.CharField(max_length=200, blank=True)
 	city = models.CharField(max_length=200, blank=True)
@@ -66,7 +69,7 @@ class Contact(models.Model):
 	phone = models.CharField(max_length=20, blank=True)
 
 class Resume(models.Model):
-	profile = models.ForeignKey('Profile',on_delete=models.CASCADE, unique=True)
+	user = models.ForeignKey(User,on_delete=models.CASCADE, unique=True)
 	#resumeFile = models.FileField(upload_to="resume/File/Directory", blank=True)
 	education = models.CharField(max_length=200, blank=True)
 	awards = models.TextField(max_length=200, blank=True)
@@ -81,9 +84,12 @@ class JobDescription(models.Model):
 	end_date = models.DateTimeField('end date')
 
 class CompanyUser(models.Model):
-	user = models.ForeignKey('Profile',unique=True,on_delete=models.CASCADE)
-	company = models.ForeignKey('Company',unique=True,on_delete=models.CASCADE)
+	user = models.ForeignKey(User,on_delete=models.CASCADE)
+	company = models.ForeignKey('Company',on_delete=models.CASCADE)
+
 	is_admin = models.BooleanField(default=False)
+	class Meta:
+		unique_together = ("user","company")
 
 class Company(models.Model):
 	MEMBERSHIP_LEVEL = [

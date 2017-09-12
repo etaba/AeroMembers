@@ -2,16 +2,10 @@
 {%block content%}
 {%include 'header.html'%}
 
-  {% if not backend %}
-  <a href="{% url 'social:begin' 'facebook' %}">Sign up with Facebook</a>
-  <a href="{% url 'social:begin' 'linkedin-oauth2' %}">Sign up with LinkedIn</a>
-  <a href="{% url 'social:begin' 'google-oauth2' %}">Google+</a>
-  <br>
-<p><strong>-- OR --</strong></p>
-  {% endif %}
   <form method="post">
     {% csrf_token %}
     {% for field in userForm %}
+      {% if field != userForm.password %}
       <p>
         {{ field.label_tag }}<br>
         {{ field }}
@@ -22,8 +16,8 @@
           <p style="color: red">{{ error }}</p>
         {% endfor %}
       </p>
+      {% endif %}
     {% endfor %}
-    <p>The following fields are optional, but will help us customize your AeroMember experience. </p>
 
     <p>
         {{ profileForm.birthdate.label_tag }}<br>
@@ -61,8 +55,7 @@
       </p>
 
     <html>
-    <button type="submit">Sign up</button>
-    <div>By registering, you agree to the <a target="_blank" href="/termsofservice">Terms of Service</a> and <a target="_blank" href="/privacy">Privacy Policy</a>
+    <button type="submit">Save Changes</button>
   </form>
 
 {%endblock%}
