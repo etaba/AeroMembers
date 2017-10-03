@@ -34,3 +34,10 @@ class NAICSForm(forms.ModelForm):
 		model = NAICS
 		fields = ('code',)
 
+
+class ThreadForm(forms.ModelForm):
+	class Meta:
+		model = Thread
+		fields = ('title','content','threadType')
+
+

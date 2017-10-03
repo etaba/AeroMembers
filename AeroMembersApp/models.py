@@ -2,8 +2,11 @@ from __future__ import unicode_literals
 
 from django.db import models
 from django.contrib.auth.models import User
+from django.contrib.contenttypes.fields import GenericForeignKey,GenericRelation
+from django.contrib.contenttypes.models import ContentType
 from django.db.models.signals import post_save
 from django.dispatch import receiver
+from datetime import datetime
 
 User._meta.get_field('email')._unique = True
 User._meta.get_field('email')._null = False
@@ -30,7 +33,7 @@ INDUSTRY_CHOICES = (
 )
 
 class Profile(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE, unique=True)
+    user = models.OneToOneField(User, on_delete=models.CASCADE, unique=True)
     	#User has:
     		#username
     		#first_name
@@ -60,8 +63,8 @@ def __str__(self):
     return '%s %s' % (self.user.first_name, self.user.last_name)
 
 class Contact(models.Model):
-	user = models.ForeignKey(User,on_delete=models.CASCADE, unique=True, null=True)
-	company = models.ForeignKey('Company',on_delete=models.CASCADE, unique=True, null=True)
+	user = models.OneToOneField(User,on_delete=models.CASCADE, unique=True, null=True)
+	company = models.OneToOneField('Company',on_delete=models.CASCADE, unique=True, null=True)
 	street_address = models.CharField(max_length=200, blank=True)
 	city = models.CharField(max_length=200, blank=True)
 	state = models.CharField(max_length=200, blank=True)
@@ -69,14 +72,14 @@ class Contact(models.Model):
 	phone = models.CharField(max_length=20, blank=True)
 
 class Resume(models.Model):
-	user = models.ForeignKey(User,on_delete=models.CASCADE, unique=True)
+	user = models.OneToOneField(User,on_delete=models.CASCADE, unique=True)
 	#resumeFile = models.FileField(upload_to="resume/File/Directory", blank=True)
 	education = models.CharField(max_length=200, blank=True)
 	awards = models.TextField(max_length=200, blank=True)
 	certifications = models.TextField(max_length=200, blank=True)
 
 class JobDescription(models.Model):
-	resume = models.ForeignKey('Resume', on_delete=models.CASCADE, unique=True)
+	resume = models.OneToOneField('Resume', on_delete=models.CASCADE, unique=True)
 	industry = models.CharField(max_length=200, choices=INDUSTRY_CHOICES)
 	job_title = models.CharField(max_length=200)
 	salary = models.IntegerField(blank=True, help_text="Will not be visible to other users.")
@@ -133,4 +136,57 @@ class NAICS(models.Model):
 class SectorMapping(models.Model):
 	code = models.IntegerField(unique=True)
 	sector = models.CharField(max_length=200)
+
+class Post(models.Model):
+	content = models.TextField(max_length=1000)
+	score = models.IntegerField(default=0)
+	createdOn = models.DateTimeField(default=datetime.now)
+	editedOn = models.DateTimeField(null = True)
+	createdBy = models.ForeignKey(User)
+	class Meta:
+		abstract = True
+	def flattenChildren(self, level):
+		children = self.post_set.all().order_by('createdOn')
+		if len(children) == 0:
+			return (level, self)
+		else:
+			return [(level,self)] + [ flattenChildren(child,level+1) for child in children ]
+
+
+class Thread(Post):
+	STATUS = [
+		(	"O","Open"),
+		(	"C","Closed"),
+		(	"R","Resolved"),
+	]
+	TYPE = [
+		("Q","Question"),
+		("D","Discussion"),
+	]
+	title = models.CharField(max_length=200)
+	status = models.CharField(max_length=200,choices=STATUS,default="O")
+	threadType = models.CharField(max_length=200,choices=TYPE)
+	replies = GenericRelation('ThreadReply')
+	def __str__(self):
+		return self.title
+
+
+class ThreadReply(Post):
+	quotedText = models.TextField(max_length=1000,null=True)
+	content_type = models.ForeignKey(ContentType,on_delete=models.CASCADE)
+	object_id = models.PositiveIntegerField()
+	parent = GenericForeignKey()
+	def __str__(self):
+		return self.content
+
+class Tag(models.Model):
+	name = models.CharField(max_length=200)
+	description = models.TextField(max_length=1000)
+	threads = models.ManyToManyField('Thread')
+	def __str__(self):
+		return self.name
+
+
+
+
 

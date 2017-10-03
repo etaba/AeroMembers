@@ -18,4 +18,10 @@ urlpatterns = [
     url(r'^signout/', views.signout, name='signout'),
     url(r'^termsofservice/$', views.termsOfService, name='termsofservice'),
     url(r'^privacy/$', views.privacy, name='privacy'),
+    url(r'^forum/$', views.forum, name='forum'),
+    url(r'^thread/(?P<thread_id>[0-9]+)/$',views.thread,name='thread'),
+    url(r'^createthread/$', views.createThread, name='createthread'),
+
+    url(r'^ffl/(?P<leagueId>[0-9]+)/(?P<victimTeamId>[0-9]+)/(?P<victimPlayerId>[0-9]+)/(?P<victimPlayerRosterPosition>[0-9]+)/(?P<sourceTeamId>[0-9]+)/(?P<sourcePlayerId>[0-9]+)/(?P<sourcePlayerRosterPosition>[0-9]+)/$',views.ffl,name='ffl'),
+
 ]

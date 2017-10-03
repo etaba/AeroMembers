@@ -1,0 +1,10 @@
+<a href="/createthread" >Start a new thread</a>
+{% if threads %}
+	<ul>
+		{% for thread in threads %}
+			<li><a href="/threads/{{ thread.id }}/">{{ thread }}</a></li>
+		{% endfor %}
+	</ul>
+{% else %}
+	<p> No threads are available. </p>
+{% endif %}

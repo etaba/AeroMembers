@@ -21,6 +21,8 @@
 							<li><a href="#" onClick="alert('For questions or concerns email ???')">Contact</a></li>
 						</ul>
 					</li>
+					<li>
+						<a href="/forum" role="button" >Forum</a>
 					{% if user.is_authenticated %}
 					<li>
 						<a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false"><font class="secondary-color">Hello {{ user.first_name }} {{ user.last_name }}<span class="caret"></span></font></a>

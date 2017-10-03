@@ -1,6 +1,6 @@
 from django.http import HttpResponse
 from django.contrib.auth import login, authenticate, update_session_auth_hash, logout
-from django.shortcuts import render, redirect, reverse
+from django.shortcuts import render, redirect, reverse, Http404
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import AdminPasswordChangeForm, PasswordChangeForm
 from django.contrib import messages
@@ -184,6 +184,36 @@ def password(request):
         form = PasswordForm(request.user)
     return render(request, 'registration/password.html', {'form': form})
 
+def forum(request):
+    threads = Thread.objects.order_by('createdOn')
+    return render(request, 'forum.html',{'threads':threads})
+
+def thread(request,thread_id):
+    try:
+        thread = Thread.objects.get(pk=thread_id)
+    except Thread.DoesNotExist:
+        raise Http404("Thread does not exist")
+    tr = ThreadReply(parent=thread,content="this is a thread reply",createdBy=request.user)
+    tr.save()
+    thread.refresh_from_db()
+    #flattenedThread = thread.flattenChildren(1)
+    return render(request, 'thread.html', {'thread':thread,'threadReply':thread.replies.all()[0]})
+
+@login_required
+def createThread(request):
+    if request.method=='POST':
+        threadForm = ThreadForm(request.POST)
+        if threadForm.is_valid():
+            thread = threadForm.save(commit=False)
+            thread.createdBy = request.user
+            thread.save();
+            return redirect(reverse('thread',kwargs={'thread_id':thread.id}))
+        else:
+            return render(request,'createThread.html',{'threadForm':threadForm})
+    else:
+        threadForm = ThreadForm()
+        return render(request,'createThread.html',{'threadForm':threadForm})
+
 def termsOfService(request):
     return render(request, 'termsOfService.html');
 
@@ -194,3 +224,21 @@ def privacy(request):
 def signout(request):
     logout(request)
     return render(request, 'index.html');
+
+#jj nelson for taylors terrance west
+#/1210475/4/16783/20/8/17514/20
+def ffl(request,leagueId,victimTeamId,victimPlayerId,victimPlayerRosterPosition,sourceTeamId,sourcePlayerId,sourcePlayerRosterPosition):
+    url = "games.espn.com/ffl/tradereview?leagueId="+leagueId+"&teamId=-2147483648&batchId=39"
+    transaction = "4_{0}_{1}_{2}_{3}_20|4_{4}_{3}_{5}_{1}_20".format(str(victimPlayerId),str(victimTeamId),str(victimPlayerRosterPosition),str(sourceTeamId),str(sourcePlayerId),str(sourcePlayerRosterPosition))
+    html = '<html><form enctype="application/x-www-form-urlencoded" method="POST" action="http://'+url+'"><table><tr><td>incoming</td><td><input type="text" value="1" name="incoming"></td></tr>\
+<tr><td>trans</td><td><input type="text" value="'+transaction+'" name="trans"></td></tr>\
+<tr><td>accept</td><td><input type="text" value="1" name="accept"></td></tr>\
+<tr><td></td><td><input type="text" value="0" name="dealbreaker_'+str(sourcePlayerId)+'"></td></tr>\
+<tr><td></td><td><input type="text" value="0" name="dealbreaker_'+str(victimPlayerId)+'"></td></tr>\
+<tr><td>overallRating</td><td><input type="text" value="" name="overallRating"></td></tr>\
+<tr><td>mailText</td><td><input type="text" value="" name="mailText"></td></tr>\
+<tr><td>sendMail</td><td><input type="text" value="0" name="sendMail"></td></tr>\
+<tr><td>proposeTradeTo</td><td><input type="text" value="-1" name="proposeTradeTo"></td></tr>\
+</table><input type="submit" value="'+url+'"></form></html>'
+    return HttpResponse(html)
+
