@@ -9,7 +9,7 @@
   <br>
 <p><strong>-- OR --</strong></p>
   {% endif %}
-  <form method="post">
+  <form method="post" action="signup/">
     {% csrf_token %}
     {% for field in userForm %}
       <p>

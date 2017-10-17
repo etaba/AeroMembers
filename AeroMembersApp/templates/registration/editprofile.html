@@ -2,7 +2,7 @@
 {%block content%}
 {%include 'header.html'%}
 
-  <form method="post">
+  <form method="post" action="editprofile/">
     {% csrf_token %}
     {% for field in userForm %}
       {% if field != userForm.password %}

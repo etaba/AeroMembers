@@ -40,4 +40,8 @@ class ThreadForm(forms.ModelForm):
 		model = Thread
 		fields = ('title','content','threadType')
 
+class ThreadReplyForm(forms.ModelForm):
+    class Meta:
+        model = Post
+        fields = ('quotedText','content')
 

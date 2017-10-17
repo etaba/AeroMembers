@@ -10,6 +10,10 @@ from django.forms.formsets import formset_factory
 from django.contrib.auth.backends import ModelBackend
 from django.template import RequestContext
 from social_django.utils import psa, load_strategy
+from pprint import pprint
+import json
+
+import pdb
 
 
 
@@ -101,12 +105,14 @@ def companyRegistration(request):
 
 def completeSignup(request):
     if request.method == 'POST':
+        print 'here'
         #user already created by social pipeline
         user = User.objects.get(username=request.POST['username'])
         userForm = UserForm(request.POST, instance=user)
         profileForm = ProfileForm(request.POST)
         contactForm = ContactForm(request.POST)
         if userForm.is_valid():
+            print 'here!?!?!'
             userForm.save()
             user.set_password(userForm.cleaned_data.get('password'))
             user.save()
@@ -118,6 +124,7 @@ def completeSignup(request):
             contact.save()
             return redirect(reverse('social:complete', args=[request.session['backend']]))
         else:
+            print "not valid..."
             return render(request, 'registration/signup.html', {'userForm': userForm,
                                                             'profileForm':profileForm,
                                                             'contactForm':contactForm,
@@ -193,11 +200,29 @@ def thread(request,thread_id):
         thread = Thread.objects.get(pk=thread_id)
     except Thread.DoesNotExist:
         raise Http404("Thread does not exist")
-    tr = ThreadReply(parent=thread,content="this is a thread reply",createdBy=request.user)
-    tr.save()
-    thread.refresh_from_db()
-    #flattenedThread = thread.flattenChildren(1)
-    return render(request, 'thread.html', {'thread':thread,'threadReply':thread.replies.all()[0]})
+    if request.method == 'POST' and request.user.is_authenticated:
+        threadReplyForm = ThreadReplyForm(request.POST)
+        if threadReplyForm.is_valid():
+            post = threadReplyForm.save(commit=False)
+            post.parent = thread
+            post.createdBy = request.user
+            post.save()
+            thread.refresh_from_db()
+    flattenedThread = thread.flattenReplies(-1)
+    for flatReply in flattenedThread:
+        if len(UserUpvote.objects.filter(user=request.user,postId=flatReply['reply'].pk))>0:
+            flatReply['scoreClass'] = "upvoted"
+        else:
+            flatReply['scoreClass'] = ""
+    if len(UserUpvote.objects.filter(user=request.user,postId=thread.pk))>0:
+        threadScoreClass = "upvoted"
+    else:
+        threadScoreClass = ""
+    threadReplyForm = ThreadReplyForm()
+    return render(request, 'thread.html', {'thread':thread,
+                                            'threadScoreClass':threadScoreClass,
+                                            'flattenedReplies':flattenedThread[1:],
+                                            'threadReplyForm':threadReplyForm})
 
 @login_required
 def createThread(request):
@@ -213,6 +238,25 @@ def createThread(request):
     else:
         threadForm = ThreadForm()
         return render(request,'createThread.html',{'threadForm':threadForm})
+
+@login_required
+def postReply(request):
+    post = Post(parent=Post.objects.get(pk=request.POST['postId']),
+                content=request.POST['replyContent'],
+                createdBy=request.user)
+    post.save()
+    return redirect(reverse('thread',kwargs={'thread_id':request.POST['threadId']}))
+
+@login_required
+def upvotePost(request):
+    postData = json.loads(request.body)
+    #pprint("POST ID: "+str(request.POST['postId'])) 
+    userUpvote = UserUpvote(user=request.user,postId=postData['postId'])
+    userUpvote.save()
+    post = Post.objects.get(pk=postData['postId'])
+    post.score += 1
+    post.save()
+    return HttpResponse()
 
 def termsOfService(request):
     return render(request, 'termsOfService.html');
