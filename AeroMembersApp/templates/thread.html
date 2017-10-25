@@ -5,11 +5,23 @@
 
     {%include 'header.html'%}
 
-
-    <h2>{{ thread }}</h2>
-    <h3 id="threadScore" class="{{threadScoreClass}}">{{ thread.score }}</h3>
-    <h3>{{ thread.content }}</h3>
+    <div ng-hide='showEditThread_{{thread.pk}}'>
+        <h2>{{ thread }}</h2>
+        <h3 id="threadScore" class="{{threadScoreClass}}">{{ thread.score }}</h3>
+        <h3>{{ thread.content }}</h3>
+    </div>
+    <form method='post' action='/editthread/' ng-show='showEditThread_{{thread.pk}}'>
+        {% csrf_token %}
+        <input name='threadContent' value='{{ thread.content }}'></input>
+        <input type='hidden' name='threadId' value='{{thread.pk}}'></input>
+        <button type='button' ng-click='showEditThread_{{thread.pk}} = false'>Cancel</button>
+        <button type='submit'>Save Edits</button>
+    </form>
     <a href="javascript:void(0);" ng-click="upvoteThread({{thread.pk}})">Upvote Thread</a>
+    {% if request.user == thread.createdBy or request.user.is_superuser %}
+        <a href="javascript:void(0);" ng-click="showEditThread_{{thread.pk}} = true">Edit</a>
+        <a href="deletepost/{{thread.pk}}" >Delete</a>
+    {% endif %}
       <form method="post" action="/thread/{{thread.pk}}/">
         {% csrf_token %}
         {%for field in threadReplyForm%}
@@ -29,26 +41,39 @@
 
     {%for replyDict in flattenedReplies %}
         <div class="post_{{replyDict.reply.pk}}">
-            <div>
-                {{replyDict.reply.content}}
-                {{replyDict.reply.pk}}
-                {{replyDict.reply.createdBy}}
-                <p id="postScore_{{replyDict.reply.pk}}" class="{{replyDict.scoreClass}}" >{{replyDict.reply.score}}</p>
-                {% if user.is_authenticated %}
-                    <a href="javascript:void(0);" ng-click="showReplyForm[{{replyDict.reply.pk}}] = true">Reply</a>
-                    <a href="javascript:void(0);" ng-click="upvote({{replyDict.reply.pk}})">Upvote</a>
-                    <a href="javascript:void(0);" ng-click="">Report*</a>
-                    <a href="javascript:void(0);" ng-click="">Edit*</a>
-                {% endif %}
+            <div ng-hide='showEdit_{{replyDict.reply.pk}}'>
+                <div ng-bind="comments[{{replyDict.reply.pk}}].content" ></div>
+                <div ng-bind="comments[{{replyDict.reply.pk}}].createdBy" ></div>
+                <div ng-bind="comments[{{replyDict.reply.pk}}].editedOn" ></div>
+                <div ng-bind="comments[{{replyDict.reply.pk}}].score" ></div>
             </div>
-            <form method='post' action='/postreply/' ng-if='showReplyForm[{{replyDict.reply.pk}}] == true'>
+            <form method='post' action='/editreply/' ng-show='showEdit_{{replyDict.reply.pk}}'>
                 {% csrf_token %}
-                <input type='text' name='replyContent'></input>
+                <input name='replyContent' ng-model="comments[{{replyDict.reply.pk}}].content" ></input>
                 <input type='hidden' name='postId' value='{{replyDict.reply.pk}}'></input>
                 <input type='hidden' name='threadId' value='{{thread.pk}}'></input>
-                <button ng-click='showReplyForm[{{replyDict.reply.pk}}] = false'>Cancel</button>
+                <button type='button' ng-click='showEdit_{{replyDict.reply.pk}} = false'>Cancel</button>
+                <button type='submit'>Save Edits</button>
+            </form>
+            <form method='post' action='/postreply/' ng-show='showComment_{{replyDict.reply.pk}}'>
+                {% csrf_token %}
+                <input type='text' name='replyContent' ></input>
+                <input type='hidden' name='postId' value='{{replyDict.reply.pk}}'></input>
+                <input type='hidden' name='threadId' value='{{thread.pk}}'></input>
+                <button type='button' ng-click='showComment_{{replyDict.reply.pk}} = false'>Cancel</button>
                 <button type='submit'>Reply</button>
             </form>
+            <div>
+                {% if user.is_authenticated %}
+                    <a href="javascript:void(0);" ng-click="showComment_{{replyDict.reply.pk}} = true">Reply</a>
+                    <a href="javascript:void(0);" ng-click="upvote({{replyDict.reply.pk}})">Upvote</a>
+                    <a href="javascript:void(0);" ng-click="">Report*</a>
+                    {% if request.user == replyDict.reply.createdBy or request.user.is_superuser %}
+                        <a href="javascript:void(0);" ng-click="showEdit_{{replyDict.reply.pk}} = true">Edit</a>
+                        <a href="deletepost/{{replyDict.reply.pk}}" >Delete</a>
+                    {% endif %}
+                {% endif %}
+            </div>
             <div class="child">
                 {% if tuple.1 == 0 %}
                 <div class="table_{{reply.pk}}">

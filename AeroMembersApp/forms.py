@@ -43,5 +43,5 @@ class ThreadForm(forms.ModelForm):
 class ThreadReplyForm(forms.ModelForm):
     class Meta:
         model = Post
-        fields = ('quotedText','content')
+        fields = ('content',)
 

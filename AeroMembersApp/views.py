@@ -10,6 +10,7 @@ from django.forms.formsets import formset_factory
 from django.contrib.auth.backends import ModelBackend
 from django.template import RequestContext
 from social_django.utils import psa, load_strategy
+from django.core.serializers.json import DjangoJSONEncoder
 from pprint import pprint
 import json
 
@@ -195,9 +196,9 @@ def forum(request):
     threads = Thread.objects.order_by('createdOn')
     return render(request, 'forum.html',{'threads':threads})
 
-def thread(request,thread_id):
+def thread(request,threadId):
     try:
-        thread = Thread.objects.get(pk=thread_id)
+        thread = Thread.objects.get(pk=threadId)
     except Thread.DoesNotExist:
         raise Http404("Thread does not exist")
     if request.method == 'POST' and request.user.is_authenticated:
@@ -224,6 +225,16 @@ def thread(request,thread_id):
                                             'flattenedReplies':flattenedThread[1:],
                                             'threadReplyForm':threadReplyForm})
 
+def comments(request,threadId):
+    try:
+        thread = Thread.objects.get(pk=threadId)
+    except Thread.DoesNotExist:
+        raise Http404("Thread does not exist")
+    data = thread.getComments()
+    return HttpResponse(json.dumps(data, cls=DjangoJSONEncoder), content_type='application/json')
+
+
+
 @login_required
 def createThread(request):
     if request.method=='POST':
@@ -232,7 +243,7 @@ def createThread(request):
             thread = threadForm.save(commit=False)
             thread.createdBy = request.user
             thread.save();
-            return redirect(reverse('thread',kwargs={'thread_id':thread.id}))
+            return redirect(reverse('thread',kwargs={'threadId':thread.id}))
         else:
             return render(request,'createThread.html',{'threadForm':threadForm})
     else:
@@ -245,18 +256,50 @@ def postReply(request):
                 content=request.POST['replyContent'],
                 createdBy=request.user)
     post.save()
-    return redirect(reverse('thread',kwargs={'thread_id':request.POST['threadId']}))
+    return redirect(reverse('thread',kwargs={'threadId':request.POST['threadId']}))
+
+def editReply(request):
+    post = Post.objects.get(pk=request.POST['postId'])
+    if post.createdBy == request.user or request.user.is_superuser:
+        post.content =  request.POST['replyContent']
+    else:
+        raise Http404("Cannot edit another user's post")
+        return HttpResponse()
+    post.save()
+    return redirect(reverse('thread',kwargs={'threadId':request.POST['threadId']}))
+
+def editThread(request):
+    post = Post.objects.get(pk=request.POST['threadId'])
+    if post.createdBy == request.user:
+        post.content =  request.POST['threadContent']
+    else:
+        raise Http404("Cannot edit another user's post")
+        return HttpResponse()
+    post.save()
+    return redirect(reverse('thread',kwargs={'threadId':request.POST['threadId']}))
 
 @login_required
 def upvotePost(request):
     postData = json.loads(request.body)
-    #pprint("POST ID: "+str(request.POST['postId'])) 
     userUpvote = UserUpvote(user=request.user,postId=postData['postId'])
     userUpvote.save()
     post = Post.objects.get(pk=postData['postId'])
     post.score += 1
     post.save()
     return HttpResponse()
+
+@login_required
+def deletePost(request, threadId, postId):
+    print 'postId: ',postId 
+    post = Post.objects.get(pk=postId)
+    if post.createdBy == request.user or request.user.is_superuser:
+        post.delete()
+    else:
+        return Http404("Cannot delete another user's post")
+    if threadId == postId:
+        return redirect(reverse('forum'))
+    else:
+        return redirect(reverse('thread',kwargs={'threadId':threadId}))
 
 def termsOfService(request):
     return render(request, 'termsOfService.html');
@@ -269,20 +312,4 @@ def signout(request):
     logout(request)
     return render(request, 'index.html');
 
-#jj nelson for taylors terrance west
-#/1210475/4/16783/20/8/17514/20
-def ffl(request,leagueId,victimTeamId,victimPlayerId,victimPlayerRosterPosition,sourceTeamId,sourcePlayerId,sourcePlayerRosterPosition):
-    url = "games.espn.com/ffl/tradereview?leagueId="+leagueId+"&teamId=-2147483648&batchId=39"
-    transaction = "4_{0}_{1}_{2}_{3}_20|4_{4}_{3}_{5}_{1}_20".format(str(victimPlayerId),str(victimTeamId),str(victimPlayerRosterPosition),str(sourceTeamId),str(sourcePlayerId),str(sourcePlayerRosterPosition))
-    html = '<html><form enctype="application/x-www-form-urlencoded" method="POST" action="http://'+url+'"><table><tr><td>incoming</td><td><input type="text" value="1" name="incoming"></td></tr>\
-<tr><td>trans</td><td><input type="text" value="'+transaction+'" name="trans"></td></tr>\
-<tr><td>accept</td><td><input type="text" value="1" name="accept"></td></tr>\
-<tr><td></td><td><input type="text" value="0" name="dealbreaker_'+str(sourcePlayerId)+'"></td></tr>\
-<tr><td></td><td><input type="text" value="0" name="dealbreaker_'+str(victimPlayerId)+'"></td></tr>\
-<tr><td>overallRating</td><td><input type="text" value="" name="overallRating"></td></tr>\
-<tr><td>mailText</td><td><input type="text" value="" name="mailText"></td></tr>\
-<tr><td>sendMail</td><td><input type="text" value="0" name="sendMail"></td></tr>\
-<tr><td>proposeTradeTo</td><td><input type="text" value="-1" name="proposeTradeTo"></td></tr>\
-</table><input type="submit" value="'+url+'"></form></html>'
-    return HttpResponse(html)
 

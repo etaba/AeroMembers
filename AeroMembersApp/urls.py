@@ -19,10 +19,12 @@ urlpatterns = [
     url(r'^termsofservice/$', views.termsOfService, name='termsofservice'),
     url(r'^privacy/$', views.privacy, name='privacy'),
     url(r'^forum/$', views.forum, name='forum'),
-    url(r'^thread/(?P<thread_id>[0-9]+)/$',views.thread,name='thread'),
+    url(r'^thread/(?P<threadId>[0-9]+)/$',views.thread,name='thread'),
     url(r'^createthread/$', views.createThread, name='createthread'),
     url(r'^postreply/$', views.postReply, name='postreply'),
+    url(r'^editreply/$', views.editReply, name='editreply'),
+    url(r'^editthread/$', views.editThread, name='editthread'),
     url(r'^upvotepost/$', views.upvotePost, name='upvotepost'),
-    url(r'^ffl/(?P<leagueId>[0-9]+)/(?P<victimTeamId>[0-9]+)/(?P<victimPlayerId>[0-9]+)/(?P<victimPlayerRosterPosition>[0-9]+)/(?P<sourceTeamId>[0-9]+)/(?P<sourcePlayerId>[0-9]+)/(?P<sourcePlayerRosterPosition>[0-9]+)/$',views.ffl,name='ffl'),
-
+    url(r'^thread/(?P<threadId>[0-9]+)/comments/$',views.comments,name='comments'),
+    url(r'^thread/(?P<threadId>[0-9]+)/deletepost/(?P<postId>[0-9]+)$',views.deletePost,name='deletepost'),
 ]

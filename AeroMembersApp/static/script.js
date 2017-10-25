@@ -5,12 +5,20 @@ app.config(['$httpProvider', function($httpProvider) {
     $httpProvider.defaults.xsrfHeaderName = 'X-CSRFToken';
 }]);
 
-app.controller('forumCtrl', ['$scope', '$http', '$sce', '$cookies', '$document', function($scope, $http, $sce, $cookies, $document) {
 
-    $scope.replyForms = {}
-    $scope.replies = {}
-    var init = function() {
-    }
+app.controller('forumCtrl', ['$scope', '$http', '$sce', '$cookies', '$document','$timeout', function($scope, $http, $sce, $cookies, $document, $timeout) {
+
+    $scope.comments = {}
+
+    $http({
+            url: "comments/",
+            method: 'GET',
+        }).then(function success(response){
+            $scope.comments = response.data
+ 
+        },function error(){
+            console.log("This user has already upvoted")
+        })
 
     $scope.upvote = function(postId){
         $http({
@@ -18,10 +26,7 @@ app.controller('forumCtrl', ['$scope', '$http', '$sce', '$cookies', '$document',
             method: 'POST',
             data: {'postId':postId}
         }).then(function success(){
-            var score = parseInt($document[0].getElementById("postScore_"+postId.toString()).textContent)
-            score += 1
-            $document[0].getElementById("postScore_"+postId).textContent = score.toString()
-            $document[0].getElementById("postScore_"+postId).classList.add("upvoted")
+            $scope.comments[postId].score = (parseInt($scope.comments[postId].score) + 1).toString()
         },function error(){
             console.log("This user has already upvoted")
         })
@@ -41,5 +46,6 @@ app.controller('forumCtrl', ['$scope', '$http', '$sce', '$cookies', '$document',
             console.log("This user has already upvoted")
         })
     }
+
 
 }]);

@@ -140,17 +140,16 @@ class Post(models.Model):
     content = models.TextField(max_length=1000)
     score = models.IntegerField(default=0)
     createdOn = models.DateTimeField(default=timezone.now)
-    editedOn = models.DateTimeField(null = True)
+    editedOn = models.DateTimeField(default = timezone.now)
     createdBy = models.ForeignKey(User)
-    quotedText = models.TextField(max_length=1000,null=True)
+    quotedText = models.TextField(max_length=1000,null=True,blank=True)
     content_type = models.ForeignKey(ContentType,on_delete=models.CASCADE,null=True)
     object_id = models.PositiveIntegerField(null=True)
     parent = GenericForeignKey('content_type','object_id')
-    replies = GenericRelation('Post')
+    replies = GenericRelation('Post', on_delete=models.CASCADE)
     def flattenReplies(self, levelsToClose):
         replies = self.replies.all().order_by('createdOn')
         if len(replies)==0:
-            #print self, "HAS NO REPLIES"
             closingTags = 2 if (levelsToClose == 0) else 2+3*(levelsToClose)
             out = [{'reply':self,'closingTags':'</div>'*closingTags}]
         else:
@@ -160,6 +159,18 @@ class Post(models.Model):
                     out += child.flattenReplies(levelsToClose+1)
                 else:
                     out += child.flattenReplies(0)
+        return out
+    def getComments(self):
+        comments = self.replies.all().order_by('createdOn')
+        commentDict = self.__dict__.copy()
+        commentDict['createdOn'] = unicode(commentDict['createdOn'].replace(microsecond=0))
+        commentDict['editedOn'] = unicode(commentDict['editedOn'].replace(microsecond=0))
+        commentDict['createdBy'] = self.createdBy.username
+        del commentDict['_state']
+        out = {self.pk:commentDict}
+
+        for comment in comments:
+            out.update(comment.getComments())
         return out
     def Post(parent,content,createdBy):
         self.parent = parent
@@ -181,6 +192,7 @@ class Thread(Post):
     title = models.CharField(max_length=200)
     status = models.CharField(max_length=200,choices=STATUS,default="O")
     threadType = models.CharField(max_length=200,choices=TYPE)
+    tags = models.ManyToManyField('Tag',null=True,blank=True)
     def __str__(self):
         return self.title
 
