@@ -2,7 +2,7 @@ from django.http import HttpResponse
 from django.contrib.auth import login, authenticate, update_session_auth_hash, logout
 from django.shortcuts import render, redirect, reverse, Http404
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth.forms import AdminPasswordChangeForm, PasswordChangeForm
+from django.contrib.auth.forms import AdminPasswordChangeForm
 from django.contrib import messages
 from forms import *
 from social_django.models import UserSocialAuth
@@ -21,9 +21,28 @@ import pdb
 from pprint import pprint
 
 def signin(request):
-    return render(request, 'registration/login.html')
+    context = {}
+    if request.method == 'POST':
+        userForm = SigninForm(request.POST)
+        if userForm.is_valid():
+            #user = User.objects.filter(email=userForm.cleaned_data.get('email'))
+            user = authenticate(username=userForm.cleaned_data.get('email'), password=userForm.cleaned_data.get('password'))
+            if user is not None:
+                login(request, user)
+                print 'hrer'
+                return redirect('index')
+            else:
+                context = {'error':"Invalid Credentials"}
+        else:
+            print "not valid?"
+    else:           
+        userForm = SigninForm()
+
+    context['userForm'] = userForm
+    return render(request, 'registration/signin.html',context)
 
 def index(request):
+
     return render(request, 'index.html');
 
 def signup(request):
@@ -175,7 +194,7 @@ def accountSettings(request):
 @login_required
 def password(request):
     if request.user.has_usable_password():
-        PasswordForm = PasswordChangeForm
+        PasswordForm = FancyPasswordChangeForm
     else:
         PasswordForm = AdminPasswordChangeForm
 

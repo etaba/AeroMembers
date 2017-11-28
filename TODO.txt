@@ -4,12 +4,37 @@ AUTHENTICATION:
 	-update oauth settings for facebook,linkedin,google with production url, production email, logo, etc
 	-remove secret keys from settings.py
 	-email invite?
+    -change password
 
 
 USER:
 	-see info about other users
+    -see user post history
 
 COMPANY
 	-invite others from same company to join company account (invitee may or may not already have account)
 	-view other company profile
 	-edit company profile
+
+FORUM
+    -collapse parent posts
+    -order by score as well as date
+        -posts
+        -threads
+    -tags/categories
+    -search
+    -report users
+    -sort replies
+    -format post content
+        -italics/bold/strikethrough/etc
+        -quoted text
+        -images?
+    -pagination
+
+
+STYLE:
+    choose font(s)
+    16 pt font
+    responsive?
+    xbrowser support
+    social media sharing

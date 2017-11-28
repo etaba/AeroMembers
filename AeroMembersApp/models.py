@@ -49,17 +49,8 @@ class Profile(models.Model):
     birthdate = models.DateTimeField('date of birth', null=True, blank = True, help_text="Will not be visible to other users.")
     private = models.BooleanField(help_text="Keep personal information hidden from other users. Only your username will be visible.",default=False)
 
-#@receiver(post_save, sender=User)
-#def create_user_profile(sender, instance, created, **kwargs):
-#    if created:
-#        Profile.objects.create(user=instance)
-#
-#@receiver(post_save, sender=User)
-#def save_user_profile(sender, instance, **kwargs):
-#    instance.profile.save()
-
-def __str__(self):
-    return '%s %s' % (self.user.first_name, self.user.last_name)
+    def __str__(self):
+        return '%s %s' % (self.user.first_name, self.user.last_name)
 
 class Contact(models.Model):
     user = models.OneToOneField(User,on_delete=models.CASCADE, unique=True, null=True)

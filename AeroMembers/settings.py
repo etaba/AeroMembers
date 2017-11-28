@@ -52,6 +52,8 @@ MIDDLEWARE = [
     'social_django.middleware.SocialAuthExceptionMiddleware',
 ]
 
+AUTHENTICATION_BACKENDS = ['AeroMembersApp.backends.EmailBackend']
+
 ROOT_URLCONF = 'AeroMembers.urls'
 
 TEMPLATES = [
@@ -114,8 +116,13 @@ AUTHENTICATION_BACKENDS = (
     'social_core.backends.linkedin.LinkedinOAuth2',
     'social_core.backends.google.GoogleOAuth2',
 )
+SOCIAL_AUTH_USERNAME_IS_FULL_EMAIL = True
 SOCIAL_AUTH_FACEBOOK_KEY = '929387930535453' 
 SOCIAL_AUTH_FACEBOOK_SECRET = '3d525a12d0547a5121e6be2e8c180f28' #TODO: separate this in production
+SOCIAL_AUTH_FACEBOOK_SCOPE = ['email']
+SOCIAL_AUTH_FACEBOOK_PROFILE_EXTRA_PARAMS = {
+    'fields': 'id,name,email', 
+}
 SOCIAL_AUTH_LINKEDIN_OAUTH2_KEY = '86a1vc8dvtt8c1'
 SOCIAL_AUTH_LINKEDIN_OAUTH2_SECRET = 'XmqMu1g3lWqIwKnq'
 SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = '944435014653-956p3ku952th9lane3qc47s9e389tnka.apps.googleusercontent.com'
@@ -159,5 +166,5 @@ USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.10/howto/static-files/
-
+STATIC_ROOT = os.path.dirname(BASE_DIR) + '/AeroMembers/AeroMembersApp/static/'
 STATIC_URL = '/static/'

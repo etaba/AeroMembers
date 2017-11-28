@@ -1,36 +1,32 @@
 {% extends "base.html" %}
 {%block content%}
 {%include 'header.html'%}
-
+<div class="container text-center">
+  <h2>Sign Up</h2>
   {% if not backend %}
-  <a href="{% url 'social:begin' 'facebook' %}">Sign up with Facebook</a>
-  <a href="{% url 'social:begin' 'linkedin-oauth2' %}">Sign up with LinkedIn</a>
-  <a href="{% url 'social:begin' 'google-oauth2' %}">Google+</a>
-  <br>
-<p><strong>-- OR --</strong></p>
+  <a href="{% url 'social:begin' 'facebook' %}"
+     class="btn btn-primary social-login-btn social-facebook"><i class="fa fa-facebook"></i></a>
+  <a href="{% url 'social:begin' backend='linkedin-oauth2' %}"
+     class="btn btn-primary social-login-btn social-linkedin"><i class="fa fa-linkedin"></i></a>
+  <a href="{% url 'social:begin' backend='google-oauth2' %}"
+     class="btn btn-primary social-login-btn social-google"><i class="fa fa-google-plus"></i></a>
+  <hr>
   {% endif %}
-  <form method="post" action="signup/">
+  <form method="post" action="signup/" >
     {% csrf_token %}
     {% for field in userForm %}
       <p>
-        {{ field.label_tag }}<br>
         {{ field }}
-        {% if field.help_text %}
-          <small style="color: grey">{{ field.help_text }}</small>
-        {% endif %}
         {% for error in field.errors %}
           <p style="color: red">{{ error }}</p>
         {% endfor %}
       </p>
     {% endfor %}
-    <p>The following fields are optional, but will help us customize your AeroMember experience. </p>
-
+    <hr>
+    <small>The following fields are optional, but will help us customize your AeroMember experience. </small>
+    <br><br>
     <p>
-        {{ profileForm.birthdate.label_tag }}<br>
         {{ profileForm.birthdate }}
-        {% if profileForm.birthdate.help_text %}
-          <small style="color: grey">{{ profileForm.birthdate.help_text }}</small>
-        {% endif %}
         {% for error in profileForm.birthdate.errors %}
           <p style="color: red">{{ error }}</p>
         {% endfor %}
@@ -38,31 +34,24 @@
 
     {% for field in contactForm %}
       <p>
-        {{ field.label_tag }}<br>
         {{ field }}
-        {% if field.help_text %}
-          <small style="color: grey">{{ field.help_text }}</small>
-        {% endif %}
         {% for error in field.errors %}
           <p style="color: red">{{ error }}</p>
         {% endfor %}
       </p>
     {% endfor %}
 
-    <p>
-        {{ profileForm.private.label_tag }}<br>
-        {{ profileForm.private }}
-        {% if profileForm.private.help_text %}
-          <small style="color: grey">{{ profileForm.private.help_text }}</small>
-        {% endif %}
+        <label class="custom-control custom-checkbox">
+          {{ profileForm.private }}
+          <span class="custom-control-indicator"></span>
+            <span class="custom-control-description">Hide my name and email from other users</span>
+          </label>
         {% for error in profileForm.private.errors %}
           <p style="color: red">{{ error }}</p>
         {% endfor %}
-      </p>
-
-    <html>
-    <button type="submit">Sign up</button>
-    <div>By registering, you agree to the <a target="_blank" href="/termsofservice">Terms of Service</a> and <a target="_blank" href="/privacy">Privacy Policy</a>
+    <button class="btn btn-lg btn-primary btn-block btn-center" type="submit" data-bindattr-3="3">Sign Up</button>
+    <br>
+    <small>By registering, you agree to the <a target="_blank" href="/termsofservice">Terms of Service</a> and <a target="_blank" href="/privacy">Privacy Policy</a></small>
   </form>
-
+</div>
 {%endblock%}

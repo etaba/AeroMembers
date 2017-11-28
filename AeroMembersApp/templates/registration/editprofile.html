@@ -1,8 +1,9 @@
 {% extends "base.html" %}
 {%block content%}
 {%include 'header.html'%}
-
-  <form method="post" action="editprofile/">
+<div class="container ">
+  <h2>Edit Profile</h2>
+  <form method="post" action="editprofile/" >
     {% csrf_token %}
     {% for field in userForm %}
       {% if field != userForm.password %}
@@ -43,19 +44,17 @@
       </p>
     {% endfor %}
 
-    <p>
-        {{ profileForm.private.label_tag }}<br>
-        {{ profileForm.private }}
-        {% if profileForm.private.help_text %}
-          <small style="color: grey">{{ profileForm.private.help_text }}</small>
-        {% endif %}
+    <label class="custom-control custom-checkbox">
+          {{ profileForm.private }}
+          <span class="custom-control-indicator"></span>
+            <span class="custom-control-description">Hide my name and email from other users</span>
+          </label>
         {% for error in profileForm.private.errors %}
           <p style="color: red">{{ error }}</p>
         {% endfor %}
-      </p>
 
-    <html>
-    <button type="submit">Save Changes</button>
+    <button class="btn btn-lg btn-primary btn-block btn-center" type="submit" data-bindattr-3="3">Save Changes</button>
   </form>
+</div>
 
 {%endblock%}

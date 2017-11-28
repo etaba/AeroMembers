@@ -1,16 +1,20 @@
+{% extends "base.html" %}
+{%block content%}
+{%include 'header.html'%}
+<div class="container text-center">
+
 <form method="post" action="companyregistration/">
     {% csrf_token %}
     {% for field in companyForm %}
       <p>
         {{ field.label_tag }}<br>
         {{ field }}
-        {% if field.help_text %}
-          <small style="color: grey">{{ field.help_text }}</small>
-        {% endif %}
         {% for error in field.errors %}
           <p style="color: red">{{ error }}</p>
         {% endfor %}
       </p>
     {% endfor %}
-    <button type="submit">Save</button>
+    <button class="btn btn-lg btn-primary btn-block btn-center" type="submit" data-bindattr-3="3">Save</button>
 </form>
+</div>
+{%endblock%}
