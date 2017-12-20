@@ -25,6 +25,9 @@ html {
 body {
   margin-bottom: 60px; /* Margin bottom by footer height */
 }
+.child {
+  
+}
 .footer {
   position: absolute;
   bottom: 0;
@@ -99,29 +102,7 @@ body {
     from { transform: scale(1) rotate(0deg);}
     to { transform: scale(1) rotate(360deg);}
 }
-.add-button {
-  background-color:#cf66ff;
-}
 
-.poormansjams-button {
-  -webkit-border-radius: 6;
-  -moz-border-radius: 6;
-  border-radius: 6px;
-  font-family: Arial;
-  color: #cf66ff;
-  font-size: 17px;
-  background: #ffe866;
-  padding: 6px 20px 10px 20px;
-  border: solid #cf66ff 2px;
-  text-decoration: none;
-}
-
-.poormansjams-button:hover {
-  background: #cf66ff;
-  border: solid #ffe866 2px;
-  color: #ffe866;
-  text-decoration: none;
-}
 
 @import url(http://weloveiconfonts.com/api/?family=brandico|entypo|openwebicons|zocial);
 

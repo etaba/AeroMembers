@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {%block content%}
 {%include 'header.html'%}
-<div class="container text-center" ng-controller="forumCtrl">
+<div class="container text-left" ng-controller="forumCtrl">
 
     <div ng-hide='showEditThread_{{thread.pk}}'>
         <h2>{{ thread }}</h2>
@@ -22,7 +22,7 @@
     {% endif %}
       <form method="post" action="/thread/{{thread.pk}}/">
         {% csrf_token %}
-        {%for field in threadReplyForm%}
+        {%for field in threadCommentForm%}
             <p>
             {{ field.label_tag }}<br>
             {{ field }}
@@ -34,49 +34,101 @@
             {% endfor %}
             </p>
         {%endfor%}
-        <button type="submit">Reply</button>
+        <button type="submit">Comment</button>
     </form>
+{%verbatim%}
+    <ul>
+        <li ng-repeat="comment in comments" >
+            <comment-tree comment="comment" ng-transclude></comment-tree>
+        </li>
+    </ul>
+    <div ng-repeat="flatComment in flattenedComments">
+        <div ng-hide='showEdit[flatComment.comment.pk]'>
+            {{flatComment.comment.score}}
+            <a href="#" ng-bind="flatComment.comment.createdBy" ></a> {{flatComment.comment.createdBy}}
+            <p ng-bind="flatComment.comment.content" ></p>
+            <div ng-bind="flatComment.comment.editedOn" ></div>
+        </div>
+        <form method='post' action='/editcomment/' ng-show='showEdit[flatComment.comment.pk]'>
+            {%endverbatim%}{% csrf_token %}{%verbatim%}
+            <input name='commentContent' ng-model="flatComment.comment.content" ></input>
+            <input type='hidden' name='postId' value='flatComment.comment.pk'></input>
+            <input type='hidden' name='threadId' value='flatComment.threadId'></input>
+            <button type='button' ng-click='showEdit[flatComment.comment.pk] = false'>Cancel</button>
+            <button type='submit'>Save Edits</button>
+        </form>
+        <form method='post' action='/postcomment/' ng-show='showComment[flatComment.comment.pk]'>
+            {%endverbatim%}{% csrf_token %}{%verbatim%}
+            <input type='text' name='commentContent' ></input>
+            <input type='hidden' name='postId' value='flatComment.comment.pk'></input>
+            <input type='hidden' name='threadId' value='threadId'></input>
+            <button type='button' ng-click='showComment[flatComment.comment.pk] = false'>Cancel</button>
+            <button type='submit'>Comment</button>
+        </form>
+        <div>
+            {%endverbatim%}
+            {% if user.is_authenticated %}
+                <a href="javascript:void(0);" ng-click="showComment[flatComment.comment.pk] = true">Comment</a>
+                <a href="javascript:void(0);" ng-click="upvote(flatComment.comment.pk)">Upvote</a>
+                {% if request.user == commentDict.comment.createdBy or request.user.is_superuser %}
+                    <a href="javascript:void(0);" ng-click="showEdit[flatComment.comment.pk] = true">Edit</a>
+                    <a ng-href="'deletepost/'+flatComment.comment.pk" >Delete</a>
+                {% else %}
+                    <a href="javascript:void(0);" ng-click="">Report*</a>
+                {% endif %}
+            {% endif %}
 
-    {%for replyDict in flattenedReplies %}
-        <div class="post_{{replyDict.reply.pk}}">
-            <div ng-hide='showEdit_{{replyDict.reply.pk}}'>
-                <div ng-bind="comments[{{replyDict.reply.pk}}].content" ></div>
-                <div ng-bind="comments[{{replyDict.reply.pk}}].createdBy" ></div>
-                <div ng-bind="comments[{{replyDict.reply.pk}}].editedOn" ></div>
-                <div ng-bind="comments[{{replyDict.reply.pk}}].score" ></div>
+        </div>
+        <div ng-bind="flatComment.closingTags"></div>
+        <ng-bind-html  ng-bind-html="flatComment.closingTags"></ng-bind-html>
+        <br>
+    </div>
+
+
+<!--
+    {%for commentDict in flattenedComments %}
+        <div class="post_{{commentDict.comment.pk}} rounded">
+            <div ng-hide='showEdit_{{commentDict.comment.pk}}'>
+                <a href="#" ng-bind="comments[{{commentDict.comment.pk}}].createdBy" ></a> {%verbatim%}{{comments[ {%endverbatim%} {{commentDict.comment.pk}} {%verbatim%} ].score}} {%endverbatim%}
+                <p ng-bind="comments[{{commentDict.comment.pk}}].content" ></p>
+                <div ng-bind="comments[{{commentDict.comment.pk}}].editedOn" ></div>
+                <div ng-bind="comments[{{commentDict.comment.pk}}].score" ></div>
             </div>
-            <form method='post' action='/editreply/' ng-show='showEdit_{{replyDict.reply.pk}}'>
+            <form method='post' action='/editcomment/' ng-show='showEdit_{{commentDict.comment.pk}}'>
                 {% csrf_token %}
-                <input name='replyContent' ng-model="comments[{{replyDict.reply.pk}}].content" ></input>
-                <input type='hidden' name='postId' value='{{replyDict.reply.pk}}'></input>
+                <input name='commentContent' ng-model="comments[{{commentDict.comment.pk}}].content" ></input>
+                <input type='hidden' name='postId' value='{{commentDict.comment.pk}}'></input>
                 <input type='hidden' name='threadId' value='{{thread.pk}}'></input>
-                <button type='button' ng-click='showEdit_{{replyDict.reply.pk}} = false'>Cancel</button>
+                <button type='button' ng-click='showEdit_{{commentDict.comment.pk}} = false'>Cancel</button>
                 <button type='submit'>Save Edits</button>
             </form>
-            <form method='post' action='/postreply/' ng-show='showComment_{{replyDict.reply.pk}}'>
+            <form method='post' action='/postcomment/' ng-show='showComment_{{commentDict.comment.pk}}'>
                 {% csrf_token %}
-                <input type='text' name='replyContent' ></input>
-                <input type='hidden' name='postId' value='{{replyDict.reply.pk}}'></input>
+                <input type='text' name='commentContent' ></input>
+                <input type='hidden' name='postId' value='{{commentDict.comment.pk}}'></input>
                 <input type='hidden' name='threadId' value='{{thread.pk}}'></input>
-                <button type='button' ng-click='showComment_{{replyDict.reply.pk}} = false'>Cancel</button>
-                <button type='submit'>Reply</button>
+                <button type='button' ng-click='showComment_{{commentDict.comment.pk}} = false'>Cancel</button>
+                <button type='submit'>Comment</button>
             </form>
             <div>
                 {% if user.is_authenticated %}
-                    <a href="javascript:void(0);" ng-click="showComment_{{replyDict.reply.pk}} = true">Reply</a>
-                    <a href="javascript:void(0);" ng-click="upvote({{replyDict.reply.pk}})">Upvote</a>
-                    <a href="javascript:void(0);" ng-click="">Report*</a>
-                    {% if request.user == replyDict.reply.createdBy or request.user.is_superuser %}
-                        <a href="javascript:void(0);" ng-click="showEdit_{{replyDict.reply.pk}} = true">Edit</a>
-                        <a href="deletepost/{{replyDict.reply.pk}}" >Delete</a>
+                    <a href="javascript:void(0);" ng-click="showComment_{{commentDict.comment.pk}} = true">Comment</a>
+                    <a href="javascript:void(0);" ng-click="upvote({{commentDict.comment.pk}})">Upvote</a>
+                    {% if request.user == commentDict.comment.createdBy or request.user.is_superuser %}
+                        <a href="javascript:void(0);" ng-click="showEdit_{{commentDict.comment.pk}} = true">Edit</a>
+                        <a href="deletepost/{{commentDict.comment.pk}}" >Delete</a>
+                    {% else %}
+                        <a href="javascript:void(0);" ng-click="">Report*</a>
                     {% endif %}
                 {% endif %}
             </div>
             <div class="child">
                 {% if tuple.1 == 0 %}
-                <div class="table_{{reply.pk}}">
+                <div class="table_{{comment.pk}}">
                 {% endif %}
-                {{replyDict.closingTags |safe}}
+                {{commentDict.closingTags |safe}}
     {%endfor%}
+-->
+
 </div>
 {% endblock %}

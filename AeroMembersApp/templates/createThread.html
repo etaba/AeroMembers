@@ -3,7 +3,7 @@
 {%include 'header.html'%}
 <div class="container text-center">
 <h2>Start a New Thread</h2>
-  <form method="post" action="/createThread/">
+  <form method="post" action="/createthread/">
     {% csrf_token %}
     {% for field in threadForm %}
       <p>

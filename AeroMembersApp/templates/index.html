@@ -1,11 +1,9 @@
 {% extends "base.html" %}
 {%block content%}
 	{%include 'header.html'%}
-<body>
 	{% csrf_token %}
 	<br><br><br>
 	<div>Welcome to AeroMembers.</div>
     {{ testForm.street_address }}
 
-</body>
 {%endblock%}

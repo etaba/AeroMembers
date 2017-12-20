@@ -84,7 +84,7 @@ class ThreadForm(BaseForm):
         model = Thread
         fields = ('title','content','threadType')
 
-class ThreadReplyForm(BaseForm):
+class ThreadCommentForm(BaseForm):
     class Meta:
         model = Post
         fields = ('content',)

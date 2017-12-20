@@ -7,6 +7,10 @@ from django.contrib.contenttypes.models import ContentType
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.utils import timezone
+from django.core import serializers
+from django.forms.models import model_to_dict
+from pprint import pprint
+
 User._meta.get_field('email')._unique = True
 User._meta.get_field('email')._null = False
 
@@ -137,32 +141,22 @@ class Post(models.Model):
     content_type = models.ForeignKey(ContentType,on_delete=models.CASCADE,null=True)
     object_id = models.PositiveIntegerField(null=True)
     parent = GenericForeignKey('content_type','object_id')
-    replies = GenericRelation('Post', on_delete=models.CASCADE)
-    def flattenReplies(self, levelsToClose):
-        replies = self.replies.all().order_by('createdOn')
-        if len(replies)==0:
-            closingTags = 2 if (levelsToClose == 0) else 2+3*(levelsToClose)
-            out = [{'reply':self,'closingTags':'</div>'*closingTags}]
-        else:
-            out = [{'reply':self,'closingTags':''}]
-            for i,child in enumerate(replies):
-                if i == len(replies)-1:
-                    out += child.flattenReplies(levelsToClose+1)
-                else:
-                    out += child.flattenReplies(0)
-        return out
+    comments = GenericRelation('Post', on_delete=models.CASCADE)
+
     def getComments(self):
-        comments = self.replies.all().order_by('createdOn')
+        children = self.comments.all().order_by('createdOn')
+        print "my id: ",self.pk,"num children: ",len(children)
         commentDict = self.__dict__.copy()
+        del commentDict['_state']
         commentDict['createdOn'] = unicode(commentDict['createdOn'].replace(microsecond=0))
         commentDict['editedOn'] = unicode(commentDict['editedOn'].replace(microsecond=0))
         commentDict['createdBy'] = self.createdBy.username
-        del commentDict['_state']
-        out = {self.pk:commentDict}
-
-        for comment in comments:
-            out.update(comment.getComments())
-        return out
+        commentDict['comments'] = [child.getComments() for child in children]
+        #out = [commentDict]
+        #for child in children:
+        #    out+=child.getComments()
+        return commentDict
+        
     def Post(parent,content,createdBy):
         self.parent = parent
         self.content = content

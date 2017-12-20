@@ -11,6 +11,7 @@ from django.contrib.auth.backends import ModelBackend
 from django.template import RequestContext
 from social_django.utils import psa, load_strategy
 from django.core.serializers.json import DjangoJSONEncoder
+from django.core import serializers
 from pprint import pprint
 import json
 
@@ -23,18 +24,14 @@ from pprint import pprint
 def signin(request):
     context = {}
     if request.method == 'POST':
-        userForm = SigninForm(request.POST)
-        if userForm.is_valid():
-            #user = User.objects.filter(email=userForm.cleaned_data.get('email'))
-            user = authenticate(username=userForm.cleaned_data.get('email'), password=userForm.cleaned_data.get('password'))
-            if user is not None:
-                login(request, user)
-                print 'hrer'
-                return redirect('index')
-            else:
-                context = {'error':"Invalid Credentials"}
+        #userForm = SigninForm(request.POST)
+        user = authenticate(username=request.POST['username'], password=request.POST['password'])
+        if user is not None:
+            login(request, user)
+            return redirect('index')
         else:
-            print "not valid?"
+            context = {'error':"Invalid Credentials"}
+            userForm = SigninForm()
     else:           
         userForm = SigninForm()
 
@@ -221,36 +218,45 @@ def thread(request,threadId):
     except Thread.DoesNotExist:
         raise Http404("Thread does not exist")
     if request.method == 'POST' and request.user.is_authenticated:
-        threadReplyForm = ThreadReplyForm(request.POST)
-        if threadReplyForm.is_valid():
-            post = threadReplyForm.save(commit=False)
+        threadCommentForm = ThreadCommentForm(request.POST)
+        if threadCommentForm.is_valid():
+            post = threadCommentForm.save(commit=False)
             post.parent = thread
             post.createdBy = request.user
             post.save()
             thread.refresh_from_db()
-    flattenedThread = thread.flattenReplies(-1)
-    for flatReply in flattenedThread:
-        if len(UserUpvote.objects.filter(user=request.user,postId=flatReply['reply'].pk))>0:
-            flatReply['scoreClass'] = "upvoted"
-        else:
-            flatReply['scoreClass'] = ""
     if len(UserUpvote.objects.filter(user=request.user,postId=thread.pk))>0:
         threadScoreClass = "upvoted"
     else:
         threadScoreClass = ""
-    threadReplyForm = ThreadReplyForm()
+    threadCommentForm = ThreadCommentForm()
     return render(request, 'thread.html', {'thread':thread,
                                             'threadScoreClass':threadScoreClass,
-                                            'flattenedReplies':flattenedThread[1:],
-                                            'threadReplyForm':threadReplyForm})
+                                            'threadCommentForm':threadCommentForm})
 
 def comments(request,threadId):
     try:
         thread = Thread.objects.get(pk=threadId)
+        threadJSON = thread.getComments()
+        for comment in threadJSON['comments']:
+            if len(UserUpvote.objects.filter(user=request.user,postId=comment['id']))>0:
+                comment['scoreClass'] = "upvoted"
+            else:
+                comment['scoreClass'] = ""
     except Thread.DoesNotExist:
         raise Http404("Thread does not exist")
-    data = thread.getComments()
-    return HttpResponse(json.dumps(data, cls=DjangoJSONEncoder), content_type='application/json')
+    data = {
+            #'comments':thread.getComments(),
+            'comments':threadJSON['comments'],
+            'threadId':threadId,
+            'user':request.user.username
+            }
+    #data = serializers.serialize('json', data)
+    data = json.dumps(data, cls=DjangoJSONEncoder)
+    return HttpResponse(data, content_type='application/json')
+
+def commentTemplate(request):
+    return render(request,'commentTemplate.html')
 
 
 
@@ -270,17 +276,18 @@ def createThread(request):
         return render(request,'createThread.html',{'threadForm':threadForm})
 
 @login_required
-def postReply(request):
+def postComment(request,threadId):
+    pprint(request.POST)
     post = Post(parent=Post.objects.get(pk=request.POST['postId']),
-                content=request.POST['replyContent'],
+                content=request.POST['commentContent'],
                 createdBy=request.user)
     post.save()
-    return redirect(reverse('thread',kwargs={'threadId':request.POST['threadId']}))
+    return redirect(reverse('thread',kwargs={'threadId':threadId}))
 
-def editReply(request):
+def editComment(request):
     post = Post.objects.get(pk=request.POST['postId'])
     if post.createdBy == request.user or request.user.is_superuser:
-        post.content =  request.POST['replyContent']
+        post.content =  request.POST['commentContent']
     else:
         raise Http404("Cannot edit another user's post")
         return HttpResponse()

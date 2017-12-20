@@ -52,8 +52,6 @@ MIDDLEWARE = [
     'social_django.middleware.SocialAuthExceptionMiddleware',
 ]
 
-AUTHENTICATION_BACKENDS = ['AeroMembersApp.backends.EmailBackend']
-
 ROOT_URLCONF = 'AeroMembers.urls'
 
 TEMPLATES = [
@@ -115,6 +113,7 @@ AUTHENTICATION_BACKENDS = (
     'social_core.backends.facebook.FacebookOAuth2',
     'social_core.backends.linkedin.LinkedinOAuth2',
     'social_core.backends.google.GoogleOAuth2',
+    'AeroMembersApp.backends.EmailBackend',
 )
 SOCIAL_AUTH_USERNAME_IS_FULL_EMAIL = True
 SOCIAL_AUTH_FACEBOOK_KEY = '929387930535453' 

@@ -14,7 +14,7 @@
         <td>
           {% if facebook_login %}
           <span>
-            <p>Connected as <a href="https://facebook.com/{{ facebook_login.extra_data.email }}/" target="_blank">{{ facebook_login.extra_data.email }}</a></p>
+            <p>Connected<!--  as <a href="https://facebook.com/{{ facebook_login.extra_data.email }}/" target="_blank">{{ facebook_login.extra_data.email }}</a>--></p>
           </span>
           {% else %}
             <span>
@@ -23,12 +23,10 @@
           {% endif %}
       </td>
       <td>
-        {% if can_disconnect %}
-          <a href="{% url 'social:disconnect' 'facebook' %}">Remove </a>
-          <form name="facebookDisconnectForm" method="post" action="{% url 'social:disconnect' 'facebook' %}">
+        {% if facebook_login and can_disconnect %}
+          <form name="facebookDisconnect" method="post" action="{% url 'social:disconnect' 'facebook' %}">
           {% csrf_token %}
-          <button type="submit">Disconnect from Facebook</button>
-          <a href="#" ng-click="facebookDisconnectForm.submit()">test</a>
+          <a href="#" onClick="document.forms.facebookDisconnect.submit();">Disconnect</a>
           </form>
         {% endif %}
       </td>
@@ -40,7 +38,7 @@
         <td>
           {% if linkedin_login %}
           <span>
-            <p>Connected as <a href="https://linkedin-oauth2.com/{{ linkedin_login.extra_data.id }}/" target="_blank">{{ linkedin_login.id }}</a></p>
+            <p>Connected<!-- as <a href="https://linkedin-oauth2.com/{{ linkedin_login.extra_data.id }}/" target="_blank">{{ linkedin_login.id }}</a>--></p>
           </span>
           {% else %}
             <span>
@@ -49,12 +47,11 @@
           {% endif %}
       </td>
       <td>
-        {% if can_disconnect %}
-          <a href="{% url 'social:disconnect' 'linkedin-oauth2' %}">Remove </a>
-          <!--<form method="post" action="{% url 'social:disconnect' 'linkedin-oauth2' %}">
+        {% if linkedin_login and can_disconnect %}
+          <form name="linkedinDisconnect" method="post" action="{% url 'social:disconnect' 'linkedin-oauth2' %}">
           {% csrf_token %}
-          <button type="submit">Disconnect from google-oauth2</button>
-          </form>-->
+          <a href="#" onClick="document.forms.linkedinDisconnect.submit();">Disconnect</a>
+          </form>
         {% endif %}
       </td>
     </tr>
@@ -65,7 +62,7 @@
         <td>
           {% if google_login %}
           <span>
-            <p>Connected as <a href="https://google-oauth2.com/{{ google_login.extra_data.id }}/" target="_blank">{{ google_login.id }}</a></p>
+            <p>Connected<!--  as <a href="https://google-oauth2.com/{{ google_login.extra_data.id }}/" target="_blank">{{ google_login.id }}</a>--></p>
           </span>
           {% else %}
             <span>
@@ -74,12 +71,11 @@
           {% endif %}
         </td>
       <td>
-        {% if can_disconnect %}
-          <a href="{% url 'social:disconnect' 'google-oauth2' %}">Remove </a>
-          <!--<form method="post" action="{% url 'social:disconnect' 'google-oauth2' %}">
+        {% if google_login and can_disconnect %}
+          <form name="googleDisconnect" method="post" action="{% url 'social:disconnect' 'google-oauth2' %}">
           {% csrf_token %}
-          <button type="submit">Disconnect from google-oauth2</button>
-          </form>-->
+          <a href="#" onClick="document.forms.googleDisconnect.submit();">Disconnect</a>
+          </form>
         {% endif %}
       </td>
     </tr>
