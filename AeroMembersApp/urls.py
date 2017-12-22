@@ -21,11 +21,11 @@ urlpatterns = [
     url(r'^forum/$', views.forum, name='forum'),
     url(r'^thread/(?P<threadId>[0-9]+)/$',views.thread,name='thread'),
     url(r'^createthread/$', views.createThread, name='createthread'),
-    url(r'^editcomment/$', views.editComment, name='editcomment'),
     url(r'^editthread/$', views.editThread, name='editthread'),
-    url(r'^upvotepost/$', views.upvotePost, name='upvotepost'),
+    url(r'^upvotecomment/$', views.upvoteComment, name='upvotecomment'),
     url(r'^commenttemplate/$', views.commentTemplate, name='commenttemplate'),
     url(r'^thread/(?P<threadId>[0-9]+)/comments/$',views.comments,name='comments'),
     url(r'^thread/(?P<threadId>[0-9]+)/postcomment/$',views.postComment,name='postcomment'),
+    url(r'^thread/(?P<threadId>[0-9]+)/editcomment/$',views.editComment,name='editcomment'),
     url(r'^thread/(?P<threadId>[0-9]+)/deletepost/(?P<postId>[0-9]+)$',views.deletePost,name='deletepost'),
 ]

@@ -6,7 +6,7 @@ app.config(['$httpProvider', function($httpProvider) {
 }]);
 
 
-app.controller('forumCtrl', ['$scope', '$http', '$sce', '$cookies', '$document','$timeout', function($scope, $http, $sce, $cookies, $document, $timeout) {
+app.controller('forumCtrl', ['$scope', '$http', '$sce', '$cookies', '$document', '$window', function($scope, $http, $sce, $cookies, $document, $window) {
     
     $http({
             url: "comments/",
@@ -19,13 +19,13 @@ app.controller('forumCtrl', ['$scope', '$http', '$sce', '$cookies', '$document',
             console.log("No comments found")
         })
 
-    $scope.upvote = function(postId){
+    $scope.upvoteComment = function(comment){
         $http({
-            url: window.location.origin+"/upvotepost/",
+            url: "/upvotecomment/",
             method: 'POST',
-            data: {'postId':postId}
+            data: {'commentId':comment.id}
         }).then(function success(){
-            $scope.comments[postId].score = (parseInt($scope.comments[postId].score) + 1).toString()
+            comment.score = (parseInt(comment.score) + 1).toString()
         },function error(){
             console.log("This user has already upvoted")
         })
@@ -46,6 +46,10 @@ app.controller('forumCtrl', ['$scope', '$http', '$sce', '$cookies', '$document',
         })
     }
 
+    $scope.deleteComment = function(commentId){
+        $window.location.href = 'deletepost/'+commentId;
+    }
+
 
 }]);
 
@@ -53,7 +57,7 @@ app.directive("commentTree", function($compile) {
     return {
         restrict: "E",
         transclude: true,
-        scope: {comment: '=',test2: '='},
+        scope: {comment: '=',user: '='},
         templateUrl:"/commenttemplate",
         
         compile: function(tElement, tAttr, transclude) {

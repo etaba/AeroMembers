@@ -1,10 +1,15 @@
 {%verbatim%}
-<div>
-    {{comment.score}}
-    <a href="#">{{comment.createdBy}} == {{user}}</a>
-    <p>{{comment.content}}</p>
-    <p>{{comment.editedOn}}</p>
-</div>
+{{comment.score}}
+<a href="#">{{comment.createdBy}}</a>
+<p>{{comment.editedOn}}</p>
+<p ng-show="!showEdit[comment.id]">{{comment.content}}</p>
+<form method='post' action='editcomment/' ng-show='showEdit[comment.id]'>
+    {%endverbatim%}{% csrf_token %}{%verbatim%}
+    <input name='commentContent' ng-model="comment.content" ></input>
+    <input type='hidden' name='postId' value='{{comment.id}}'></input>
+    <button type='button' ng-click='showEdit[comment.id] = false'>Cancel</button>
+    <button type='submit'>Save Edits</button>
+</form>
 <form method='post' action='postcomment/' ng-show='showComment[comment.id]'>
     {%endverbatim%}{% csrf_token %}{%verbatim%}
     <input type='text' name='commentContent' ></input>
@@ -15,13 +20,9 @@
 {%endverbatim%}
 {% if user.is_authenticated %}
     <a href="javascript:void(0);" ng-click="showComment[comment.id] = true">Comment</a>
-    <a href="javascript:void(0);" ng-click="upvote(comment.id)">Upvote</a>
+    <a href="javascript:void(0);" ng-click="upvoteComment(comment)">Upvote</a>
     <a href="javascript:void(0);" ng-show="comment.createdBy==user" ng-click="showEdit[comment.id] = true">Edit</a>
-    <a ng-href="'deletepost/'+comment.id" ng-show="comment.createdBy==user" >Delete</a>
+    <a href="javascript:void(0);" ng-show="comment.createdBy==user" ng-click="deleteComment(comment.id)">Delete</a>
     <!--<a href="javascript:void(0);" ng-click="">Report*</a>-->
 {% endif %}
-<ul>
-    <li ng-repeat="child in comment.comments">
-        <comment-tree comment="child" ng-transclude></comment-tree>
-    </li>
-</ul>
+<div class="rounded border" ng-repeat="comment in comment.comments" ng-include="'/commenttemplate'"></div>

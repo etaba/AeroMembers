@@ -284,7 +284,7 @@ def postComment(request,threadId):
     post.save()
     return redirect(reverse('thread',kwargs={'threadId':threadId}))
 
-def editComment(request):
+def editComment(request,threadId):
     post = Post.objects.get(pk=request.POST['postId'])
     if post.createdBy == request.user or request.user.is_superuser:
         post.content =  request.POST['commentContent']
@@ -292,7 +292,7 @@ def editComment(request):
         raise Http404("Cannot edit another user's post")
         return HttpResponse()
     post.save()
-    return redirect(reverse('thread',kwargs={'threadId':request.POST['threadId']}))
+    return redirect(reverse('thread',kwargs={'threadId':threadId}))
 
 def editThread(request):
     post = Post.objects.get(pk=request.POST['threadId'])
@@ -305,11 +305,11 @@ def editThread(request):
     return redirect(reverse('thread',kwargs={'threadId':request.POST['threadId']}))
 
 @login_required
-def upvotePost(request):
-    postData = json.loads(request.body)
-    userUpvote = UserUpvote(user=request.user,postId=postData['postId'])
+def upvoteComment(request):
+    commentData = json.loads(request.body)
+    userUpvote = UserUpvote(user=request.user,postId=commentData['commentId'])
     userUpvote.save()
-    post = Post.objects.get(pk=postData['postId'])
+    post = Post.objects.get(pk=commentData['commentId'])
     post.score += 1
     post.save()
     return HttpResponse()
