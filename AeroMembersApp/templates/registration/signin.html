@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{%block content%}
+{%include 'header.html'%}
+
+<div class="container text-center">
+  <form method="post" action="/signin/" class="form-signin" data-ember-action="2">
+    {% csrf_token %}
+        <h2 class="form-signin-heading">Sign in</h2>
+<br>
+    <a href="{% url 'social:begin' 'facebook' %}"
+     class="btn btn-primary social-login-btn social-facebook"><i class="fa fa-facebook"></i></a>
+  <a href="{% url 'social:begin' backend='linkedin-oauth2' %}"
+     class="btn btn-primary social-login-btn social-linkedin"><i class="fa fa-linkedin"></i></a>
+  <a href="{% url 'social:begin' backend='google-oauth2' %}" 
+     class="btn btn-primary social-login-btn social-google"><i class="fa fa-google-plus"></i></a>
+    <hr>
+    {{ userForm.username }}
+    {% for error in userForm.username.errors %}
+          <p style="color: red">{{ error }}</p>
+        {% endfor %}
+    <br>
+    {{ userForm.password }}
+    <br>
+    {% if error %}
+      <p class=" alert alert-danger">
+      {{ error }}
+      </p>
+    {% endif %}
+    {% for error in userForm.errors %}
+      {{ error }}
+      {% endfor %}
+    <button class="btn btn-lg btn-primary btn-block btn-center" type="submit" data-bindattr-3="3">Sign in</button>
+
+  </form>
+
+  <br>
+  
+  <br>
+  <a href="/signup"><p><strong>Don't have an account? Sign Up</strong></p></a>
+
+</div>
+{%endblock%}

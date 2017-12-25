@@ -2,10 +2,10 @@
 {%block content%}
 {%include 'header.html'%}
 <div class="container text-center">
-
-<form method="post" action="companyregistration/">
+<h2>Start a New Thread</h2>
+  <form method="post" action="/createthread/">
     {% csrf_token %}
-    {% for field in companyForm %}
+    {% for field in threadForm %}
       <p>
         {{ field.label_tag }}<br>
         {{ field }}
@@ -14,7 +14,7 @@
         {% endfor %}
       </p>
     {% endfor %}
-    <button class="btn btn-lg btn-primary btn-block btn-center" type="submit" data-bindattr-3="3">Save</button>
-</form>
+    <button class="btn btn-lg btn-primary btn-block btn-center" type="submit" data-bindattr-3="3">Start Thread</button>
+  </form>
 </div>
 {%endblock%}

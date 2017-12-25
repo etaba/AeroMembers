@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{%block content%}
+{%include 'header.html'%}
+<div class="container text-center">
+    <a href="/createthread/" >Start a new thread</a>
+    {% if threads %}
+        <table class="table">
+            {% for thread in threads %}
+                <tr><td><a href="/thread/{{ thread.id }}/">{{ thread }}</a></td></tr>
+            {% endfor %}
+        </table>
+    {% else %}
+        <p> No threads are available. </p>
+    {% endif %}
+</div>
+{%endblock%}

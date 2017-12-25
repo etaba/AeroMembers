@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{%block content%}
+{%include 'header.html'%}
+<div class="container text-left" ng-controller="forumCtrl">
+
+    <div ng-hide='showEditThread_{{thread.pk}}'>
+        <h2>{{ thread }}</h2>
+        <h3 id="threadScore" class="{{threadScoreClass}}">{{ thread.score }}</h3>
+        <h3>{{ thread.content }}</h3>
+    </div>
+    <form method='post' action='/editthread/' ng-show='showEditThread_{{thread.pk}}'>
+        {% csrf_token %}
+        <input name='threadContent' value='{{ thread.content }}'></input>
+        <input type='hidden' name='threadId' value='{{thread.pk}}'></input>
+        <button type='button' ng-click='showEditThread_{{thread.pk}} = false'>Cancel</button>
+        <button type='submit'>Save Edits</button>
+    </form>
+    <a href="javascript:void(0);" ng-click="upvoteThread({{thread.pk}})">Upvote Thread</a>
+    {% if request.user == thread.createdBy or request.user.is_superuser %}
+        <a href="javascript:void(0);" ng-click="showEditThread_{{thread.pk}} = true">Edit</a>
+        <a href="deletepost/{{thread.pk}}" >Delete</a>
+    {% endif %}
+      <form method="post" action="/thread/{{thread.pk}}/">
+        {% csrf_token %}
+        {%for field in threadCommentForm%}
+            <p>
+            {{ field.label_tag }}<br>
+            {{ field }}
+            {% if field.help_text %}
+              <small style="color: grey">{{ field.help_text }}</small>
+            {% endif %}
+            {% for error in field.errors %}
+              <p style="color: red">{{ error }}</p>
+            {% endfor %}
+            </p>
+        {%endfor%}
+        <button type="submit">Comment</button>
+    </form>
+    <div class="border rounded" ng-repeat="comment in comments" ng-include src="'/commenttemplate/'"></div>
+</div>
+{% endblock %}

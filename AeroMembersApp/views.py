@@ -1,8 +1,8 @@
 from django.http import HttpResponse
 from django.contrib.auth import login, authenticate, update_session_auth_hash, logout
-from django.shortcuts import render, redirect, reverse
+from django.shortcuts import render, redirect, reverse, Http404
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth.forms import AdminPasswordChangeForm, PasswordChangeForm
+from django.contrib.auth.forms import AdminPasswordChangeForm
 from django.contrib import messages
 from forms import *
 from social_django.models import UserSocialAuth
@@ -10,15 +10,36 @@ from django.forms.formsets import formset_factory
 from django.contrib.auth.backends import ModelBackend
 from django.template import RequestContext
 from social_django.utils import psa, load_strategy
+from django.core.serializers.json import DjangoJSONEncoder
+from django.core import serializers
+from pprint import pprint
+import json
+
+import pdb
 
 
 
 from pprint import pprint
 
 def signin(request):
-    return render(request, 'registration/login.html')
+    context = {}
+    if request.method == 'POST':
+        #userForm = SigninForm(request.POST)
+        user = authenticate(username=request.POST['username'], password=request.POST['password'])
+        if user is not None:
+            login(request, user)
+            return redirect('index')
+        else:
+            context = {'error':"Invalid Credentials"}
+            userForm = SigninForm()
+    else:           
+        userForm = SigninForm()
+
+    context['userForm'] = userForm
+    return render(request, 'registration/signin.html',context)
 
 def index(request):
+
     return render(request, 'index.html');
 
 def signup(request):
@@ -101,12 +122,14 @@ def companyRegistration(request):
 
 def completeSignup(request):
     if request.method == 'POST':
+        print 'here'
         #user already created by social pipeline
         user = User.objects.get(username=request.POST['username'])
         userForm = UserForm(request.POST, instance=user)
         profileForm = ProfileForm(request.POST)
         contactForm = ContactForm(request.POST)
         if userForm.is_valid():
+            print 'here!?!?!'
             userForm.save()
             user.set_password(userForm.cleaned_data.get('password'))
             user.save()
@@ -118,6 +141,7 @@ def completeSignup(request):
             contact.save()
             return redirect(reverse('social:complete', args=[request.session['backend']]))
         else:
+            print "not valid..."
             return render(request, 'registration/signup.html', {'userForm': userForm,
                                                             'profileForm':profileForm,
                                                             'contactForm':contactForm,
@@ -167,7 +191,7 @@ def accountSettings(request):
 @login_required
 def password(request):
     if request.user.has_usable_password():
-        PasswordForm = PasswordChangeForm
+        PasswordForm = FancyPasswordChangeForm
     else:
         PasswordForm = AdminPasswordChangeForm
 
@@ -184,6 +208,125 @@ def password(request):
         form = PasswordForm(request.user)
     return render(request, 'registration/password.html', {'form': form})
 
+def forum(request):
+    threads = Thread.objects.order_by('createdOn')
+    return render(request, 'forum.html',{'threads':threads})
+
+def thread(request,threadId):
+    try:
+        thread = Thread.objects.get(pk=threadId)
+    except Thread.DoesNotExist:
+        raise Http404("Thread does not exist")
+    if request.method == 'POST' and request.user.is_authenticated:
+        threadCommentForm = ThreadCommentForm(request.POST)
+        if threadCommentForm.is_valid():
+            post = threadCommentForm.save(commit=False)
+            post.parent = thread
+            post.createdBy = request.user
+            post.save()
+            thread.refresh_from_db()
+    if len(UserUpvote.objects.filter(user=request.user,postId=thread.pk))>0:
+        threadScoreClass = "upvoted"
+    else:
+        threadScoreClass = ""
+    threadCommentForm = ThreadCommentForm()
+    return render(request, 'thread.html', {'thread':thread,
+                                            'threadScoreClass':threadScoreClass,
+                                            'threadCommentForm':threadCommentForm})
+
+def comments(request,threadId):
+    try:
+        thread = Thread.objects.get(pk=threadId)
+        threadJSON = thread.getComments()
+        for comment in threadJSON['comments']:
+            if len(UserUpvote.objects.filter(user=request.user,postId=comment['id']))>0:
+                comment['scoreClass'] = "upvoted"
+            else:
+                comment['scoreClass'] = ""
+    except Thread.DoesNotExist:
+        raise Http404("Thread does not exist")
+    data = {
+            #'comments':thread.getComments(),
+            'comments':threadJSON['comments'],
+            'threadId':threadId,
+            'user':request.user.username
+            }
+    #data = serializers.serialize('json', data)
+    data = json.dumps(data, cls=DjangoJSONEncoder)
+    return HttpResponse(data, content_type='application/json')
+
+def commentTemplate(request):
+    return render(request,'commentTemplate.html')
+
+
+
+@login_required
+def createThread(request):
+    if request.method=='POST':
+        threadForm = ThreadForm(request.POST)
+        if threadForm.is_valid():
+            thread = threadForm.save(commit=False)
+            thread.createdBy = request.user
+            thread.save();
+            return redirect(reverse('thread',kwargs={'threadId':thread.id}))
+        else:
+            return render(request,'createThread.html',{'threadForm':threadForm})
+    else:
+        threadForm = ThreadForm()
+        return render(request,'createThread.html',{'threadForm':threadForm})
+
+@login_required
+def postComment(request,threadId):
+    pprint(request.POST)
+    post = Post(parent=Post.objects.get(pk=request.POST['postId']),
+                content=request.POST['commentContent'],
+                createdBy=request.user)
+    post.save()
+    return redirect(reverse('thread',kwargs={'threadId':threadId}))
+
+def editComment(request,threadId):
+    post = Post.objects.get(pk=request.POST['postId'])
+    if post.createdBy == request.user or request.user.is_superuser:
+        post.content =  request.POST['commentContent']
+    else:
+        raise Http404("Cannot edit another user's post")
+        return HttpResponse()
+    post.save()
+    return redirect(reverse('thread',kwargs={'threadId':threadId}))
+
+def editThread(request):
+    post = Post.objects.get(pk=request.POST['threadId'])
+    if post.createdBy == request.user:
+        post.content =  request.POST['threadContent']
+    else:
+        raise Http404("Cannot edit another user's post")
+        return HttpResponse()
+    post.save()
+    return redirect(reverse('thread',kwargs={'threadId':request.POST['threadId']}))
+
+@login_required
+def upvoteComment(request):
+    commentData = json.loads(request.body)
+    userUpvote = UserUpvote(user=request.user,postId=commentData['commentId'])
+    userUpvote.save()
+    post = Post.objects.get(pk=commentData['commentId'])
+    post.score += 1
+    post.save()
+    return HttpResponse()
+
+@login_required
+def deletePost(request, threadId, postId):
+    print 'postId: ',postId 
+    post = Post.objects.get(pk=postId)
+    if post.createdBy == request.user or request.user.is_superuser:
+        post.delete()
+    else:
+        return Http404("Cannot delete another user's post")
+    if threadId == postId:
+        return redirect(reverse('forum'))
+    else:
+        return redirect(reverse('thread',kwargs={'threadId':threadId}))
+
 def termsOfService(request):
     return render(request, 'termsOfService.html');
 
@@ -194,3 +337,5 @@ def privacy(request):
 def signout(request):
     logout(request)
     return render(request, 'index.html');
+
+
