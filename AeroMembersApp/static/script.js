@@ -33,7 +33,7 @@ app.controller('forumCtrl', ['$scope', '$http', '$sce', '$cookies', '$document',
 
     $scope.upvoteThread = function(threadId){
         $http({
-            url: window.location.origin+"/upvotepost/",
+            url: "/upvotepost/",
             method: 'POST',
             data: {'postId':threadId}
         }).then(function success(){
@@ -52,25 +52,3 @@ app.controller('forumCtrl', ['$scope', '$http', '$sce', '$cookies', '$document',
 
 
 }]);
-
-app.directive("commentTree", function($compile) {
-    return {
-        restrict: "E",
-        transclude: true,
-        scope: {comment: '=',user: '='},
-        templateUrl:"/commenttemplate",
-        
-        compile: function(tElement, tAttr, transclude) {
-            var contents = tElement.contents().remove();
-            var compiledContents;
-            return function(scope, iElement, iAttr) {
-                if(!compiledContents) {
-                    compiledContents = $compile(contents, transclude);
-                }
-                compiledContents(scope, function(clone, scope) {
-                         iElement.append(clone); 
-                });
-            };
-        }
-    };
-});
