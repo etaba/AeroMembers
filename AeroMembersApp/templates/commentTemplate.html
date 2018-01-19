@@ -1,6 +1,6 @@
 {%verbatim%}
 {{comment.score}}
-<a href="#">{{comment.createdBy}}</a>
+<a href="/viewuser/{{comment.createdBy}}">{{comment.createdBy}}</a>
 <p>{{comment.editedOn}}</p>
 <p ng-show="!showEdit[comment.id]">{{comment.content}}</p>
 <form method='post' action='editcomment/' ng-show='showEdit[comment.id]'>

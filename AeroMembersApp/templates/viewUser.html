@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block content %}
+{% include "header.html" %}
+<div>
+    Name: {{ user.first_name }} {{ user.last_name }}
+</div>
+{% if companies %}
+    <div>
+    Associated Companies:
+    {% for c in companies %}
+        <div>
+            <a href="/viewcompany/{{c.id}}">{{c}}</a>
+        </div>
+    {% endfor %}
+    </div>
+{% endif %}
+{% if not private %}
+<div>
+    Location: {{contact.city}}, {{contact.state}}
+</div>
+<div>
+    Email: {{user.email}}
+</div>
+<div>
+    Phone: {{contact.phone}}
+</div>
+{% endif %}
+{% endblock %}

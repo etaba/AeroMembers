@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block content %}
+{% include "header.html" %}
+<div>
+    Name: {{ company.name }}
+</div>
+<div>
+    Department: {{ company.department }}
+</div>
+<div>
+    Number of Employees: {{ company.number_of_employees }}
+</div>
+<div>
+    Activity: {{ company.activity_type }}
+</div>
+<div>
+    Description: {{ company.description }}
+</div>
+{% if isAdmin %}
+    <a href="/editcompany/{{company.id}}">Edit Company Details</a>
+{% endif %}
+{% endblock %}

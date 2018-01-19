@@ -120,6 +120,30 @@ def companyRegistration(request):
         companyForm = CompanyForm()
         return render(request, 'registration/companyregistration.html',{'companyForm':companyForm})
 
+def viewCompany(request,companyId):
+    company  = Company.objects.get(pk=companyId)
+    companyUser = CompanyUser.objects.filter(company=company,user=request.user)
+    isAdmin = companyUser.get().is_admin if companyUser else False
+    return render(request, 'viewCompany.html',{'company':company,'isAdmin':isAdmin});
+
+@login_required
+def editCompany(request,companyId):
+    company = Company.objects.get(pk=companyId)
+    companyUser = CompanyUser.objects.get(company=company,user=request.user)
+    if not companyUser or not companyUser.is_admin:
+        return Http404()
+    else:
+        if request.method == 'POST':
+            companyForm = CompanyForm(request.POST,instance=company)
+            if companyForm.is_valid():
+                companyForm.save()
+            return redirect(reverse('viewcompany',kwargs={'companyId':companyId}))
+
+        else:
+            companyForm = CompanyForm(instance=company)
+            return render(request, 'registration/editCompany.html',{'companyForm':companyForm,'companyId':companyId})
+
+
 def completeSignup(request):
     if request.method == 'POST':
         print 'here'
@@ -332,6 +356,14 @@ def termsOfService(request):
 
 def privacy(request):
     return render(request, 'privacy.html');
+
+def viewUser(request,username):
+    user  = User.objects.get(username=username)
+    contact = Contact.objects.filter(user=user).get()
+    profile = Profile.objects.filter(user=user).get()
+    private = profile.private
+    companies = map(lambda uc: uc.company, CompanyUser.objects.filter(user=user))
+    return render(request, 'viewUser.html',{'user':user,'contact':contact,'companies':companies,'private':private});
 
 @login_required
 def signout(request):

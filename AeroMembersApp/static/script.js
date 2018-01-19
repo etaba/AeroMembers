@@ -52,3 +52,25 @@ app.controller('forumCtrl', ['$scope', '$http', '$sce', '$cookies', '$document',
 
 
 }]);
+
+app.controller('braintreeCtrl', ['$scope','$http',function($scope,$http){
+    var button = document.querySelector('#submit-button');
+    $http({
+            url: "/clienttoken/",
+            method: 'GET'
+        }).then(function success(){
+            braintree.dropin.create({
+                  authorization: 'CLIENT_TOKEN_FROM_SERVER',
+                  container: '#dropin-container'
+                }, function (createErr, instance) {
+                  button.addEventListener('click', function () {
+                    instance.requestPaymentMethod(function (err, payload) {
+                      // Submit payload.nonce to your server
+                    });
+                  });
+                });
+        },function error(){
+            console.log("Client token not received.")
+        })
+    
+}]);

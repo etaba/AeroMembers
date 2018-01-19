@@ -64,19 +64,14 @@ class ProfileForm(forms.ModelForm):
 class CompanyForm(BaseForm):
     class Meta:
         model = Company
-        fields = ('name', 'department', 'membership_level','cage_code', 'number_of_employees', 'activity_type')
+        fields = ('name', 'department', 'membership_level','cage_code', 'number_of_employees', 'activity_type','naics','description')
         widgets = {
             'name': forms.TextInput(attrs={'placeholder': 'Name'}),
             'department': forms.TextInput(attrs={'placeholder': 'Department'}),
-            'membership_level': forms.TextInput(attrs={'default': 'Silver'}),
             'number_of_employees': forms.TextInput(attrs={'placeholder': 'Number of Employees'}),
-            'activity_type': forms.TextInput(attrs={'placeholder': 'Activity'}),
+            'cage_code': forms.TextInput(attrs={'placeholder': 'Cage Code'}),
+            'description': forms.TextInput(attrs={'placeholder' : 'Description'})
         }
-
-class NAICSForm(BaseForm):
-    class Meta:
-        model = NAICS
-        fields = ('code',)
 
 
 class ThreadForm(BaseForm):

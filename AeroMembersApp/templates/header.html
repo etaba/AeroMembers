@@ -43,7 +43,7 @@
 						<a href="#" class="dropdown-toggle nav-link" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Company<span class="caret"></span></a>
 						<div class="dropdown-menu dropdown-menu-right">
 							{% for c in companies %}
-							<a href="#" class="dropdown-item">{{ c.company }}</a>
+							<a href="/viewcompany/{{c.pk}}" class="dropdown-item">{{ c.company }}</a>
 							{% endfor %}
 							<a href="/companyregistration" class="dropdown-item">Add New Company</a>
 						</div>

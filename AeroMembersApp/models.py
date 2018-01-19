@@ -83,7 +83,6 @@ class JobDescription(models.Model):
 class CompanyUser(models.Model):
     user = models.ForeignKey(User,on_delete=models.CASCADE)
     company = models.ForeignKey('Company',on_delete=models.CASCADE)
-
     is_admin = models.BooleanField(default=False)
     class Meta:
         unique_together = ("user","company")
@@ -95,24 +94,24 @@ class Company(models.Model):
         ("P","Platinum")
     ]
     ACTIVITY_TYPE = [
-        ("Contract Management","Contract Management"),
-        ("Design","Design"),
-        ("Engineering","Engineering"),
-        ("Facility Management","Facility Management"),
-        ("General Management","General Management"),
-        ("Human Resources","Human Resources"),
+        ("CM","Contract Management"),
+        ("DES","Design"),
+        ("ENG","Engineering"),
+        ("FM","Facility Management"),
+        ("GM","General Management"),
+        ("HR","Human Resources"),
         ("IT","IT"),
-        ("Manufacturing Engineering","Manufacturing Engineering"),
-        ("Marketing","Marketing"),
-        ("Operations","Operations"),
-        ("Planning","Planning"),
-        ("Production","Production"),
-        ("Purchasing","Purchasing"),
-        ("Quality","Quality"),
-        ("R&D","R&D"),
-        ("Repair & Warranty","Repair & Warranty"),
-        ("Sales","Sales"),
-        ("Supply Chain Management","Supply Chain Management"),
+        ("ME","Manufacturing Engineering"),
+        ("MKT","Marketing"),
+        ("OP","Operations"),
+        ("PLN","Planning"),
+        ("PROD","Production"),
+        ("PRCH","Purchasing"),
+        ("QA","Quality"),
+        ("RD","R&D"),
+        ("RW","Repair & Warranty"),
+        ("SAL","Sales"),
+        ("SCM","Supply Chain Management"),
     ]
     name = models.CharField(max_length=200)
     department = models.CharField(max_length=200)
@@ -120,13 +119,17 @@ class Company(models.Model):
     cage_code = models.CharField(max_length=6, null=True, blank=True)
     number_of_employees = models.IntegerField()
     activity_type = models.CharField(max_length = 200, choices=ACTIVITY_TYPE)
+    naics = models.IntegerField()
+    description = models.TextField(max_length=1000, blank=True)
     def __str__(self):
         return self.name
 
+'''
 class NAICS(models.Model):
     company = models.ForeignKey('Company', on_delete=models.CASCADE)
-    code = models.IntegerField()
+    code = models.IntegerField()'''
 
+#maps naics code to industry sector. see naicsSectorTable.sql file which has all mappings ready to load into this table
 class SectorMapping(models.Model):
     code = models.IntegerField(unique=True)
     sector = models.CharField(max_length=200)
