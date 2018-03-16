@@ -9,7 +9,6 @@ AUTHENTICATION:
 
 
 USER:
-    -expand url viewuser username parameter to accept all characters (currently only does numbers and letters)
     -see user post history
 
 COMPANY
@@ -39,3 +38,7 @@ STYLE:
     responsive?
     xbrowser support
     social media sharing
+
+BRAINTREE PAYMENTS
+    -support for paypal, applepay, android pay, others
+    

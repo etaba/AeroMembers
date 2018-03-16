@@ -4,22 +4,16 @@ from django.shortcuts import render, redirect, reverse, Http404
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import AdminPasswordChangeForm
 from django.contrib import messages
-from forms import *
+from AeroMembersApp.forms import *
 from social_django.models import UserSocialAuth
-from django.forms.formsets import formset_factory
-from django.contrib.auth.backends import ModelBackend
-from django.template import RequestContext
-from social_django.utils import psa, load_strategy
 from django.core.serializers.json import DjangoJSONEncoder
-from django.core import serializers
 from pprint import pprint
 import json
+import braintree
 
-import pdb
-
-
-
-from pprint import pprint
+BRAINTREE_MERCHANT_ID = "5vgz24sws5f9jw2k"
+BRAINTREE_PUBLIC_KEY = "2wcngqdvwszvfyq7"
+BRAINTREE_PRIVATE_KEY = "ee32c1d473e2cabe312a2d1c9b9ec89e"
 
 def signin(request):
     context = {}
@@ -28,6 +22,9 @@ def signin(request):
         user = authenticate(username=request.POST['username'], password=request.POST['password'])
         if user is not None:
             login(request, user)
+            companies = CompanyUser.objects.filter(user=user)
+            if len(companies) == 1:
+                request.session['currCompanyId'] = companies[0].company.pk
             return redirect('index')
         else:
             context = {'error':"Invalid Credentials"}
@@ -39,7 +36,6 @@ def signin(request):
     return render(request, 'registration/signin.html',context)
 
 def index(request):
-
     return render(request, 'index.html');
 
 def signup(request):
@@ -66,8 +62,6 @@ def signup(request):
             if user is not None:
                 login(request, user)
                 return redirect('index')
-            else:
-                print "not authed!!\n\n\n\n"
     else:
         userForm = UserForm()
         profileForm = ProfileForm()
@@ -97,7 +91,7 @@ def editProfile(request):
             contactForm.save()
             return redirect('index')
         else:
-            print userForm._errors
+            print(userForm._errors)
     else:
         userForm = UserFormWithoutPassword(instance=request.user)
         profileForm = ProfileForm(instance=profile)
@@ -124,7 +118,14 @@ def viewCompany(request,companyId):
     company  = Company.objects.get(pk=companyId)
     companyUser = CompanyUser.objects.filter(company=company,user=request.user)
     isAdmin = companyUser.get().is_admin if companyUser else False
-    return render(request, 'viewCompany.html',{'company':company,'isAdmin':isAdmin});
+    return render(request, 'viewCompany.html',{'company':company,'isAdmin':isAdmin})
+
+def setCompany(request,companyId=None):
+    if companyId == None:
+        request.session['currCompanyId'] = None
+    else:
+        request.session['currCompanyId'] = companyId
+    return redirect('index')
 
 @login_required
 def editCompany(request,companyId):
@@ -146,14 +147,12 @@ def editCompany(request,companyId):
 
 def completeSignup(request):
     if request.method == 'POST':
-        print 'here'
         #user already created by social pipeline
         user = User.objects.get(username=request.POST['username'])
         userForm = UserForm(request.POST, instance=user)
         profileForm = ProfileForm(request.POST)
         contactForm = ContactForm(request.POST)
         if userForm.is_valid():
-            print 'here!?!?!'
             userForm.save()
             user.set_password(userForm.cleaned_data.get('password'))
             user.save()
@@ -165,7 +164,6 @@ def completeSignup(request):
             contact.save()
             return redirect(reverse('social:complete', args=[request.session['backend']]))
         else:
-            print "not valid..."
             return render(request, 'registration/signup.html', {'userForm': userForm,
                                                             'profileForm':profileForm,
                                                             'contactForm':contactForm,
@@ -270,12 +268,10 @@ def comments(request,threadId):
     except Thread.DoesNotExist:
         raise Http404("Thread does not exist")
     data = {
-            #'comments':thread.getComments(),
             'comments':threadJSON['comments'],
             'threadId':threadId,
             'user':request.user.username
             }
-    #data = serializers.serialize('json', data)
     data = json.dumps(data, cls=DjangoJSONEncoder)
     return HttpResponse(data, content_type='application/json')
 
@@ -301,7 +297,6 @@ def createThread(request):
 
 @login_required
 def postComment(request,threadId):
-    pprint(request.POST)
     post = Post(parent=Post.objects.get(pk=request.POST['postId']),
                 content=request.POST['commentContent'],
                 createdBy=request.user)
@@ -340,7 +335,6 @@ def upvoteComment(request):
 
 @login_required
 def deletePost(request, threadId, postId):
-    print 'postId: ',postId 
     post = Post.objects.get(pk=postId)
     if post.createdBy == request.user or request.user.is_superuser:
         post.delete()
@@ -357,13 +351,188 @@ def termsOfService(request):
 def privacy(request):
     return render(request, 'privacy.html');
 
-def viewUser(request,username):
-    user  = User.objects.get(username=username)
-    contact = Contact.objects.filter(user=user).get()
-    profile = Profile.objects.filter(user=user).get()
-    private = profile.private
+def viewUser(request,userId):
+    user  = User.objects.get(pk=userId)
+    context = {'user':user}
+    contact = Contact.objects.filter(user=user)
+    if len(contact) > 0:
+        context['contact'] = contact.get()
+    profile = Profile.objects.filter(user=user)
+    if len(profile) > 0:
+        context['private'] = profile.get().private
     companies = map(lambda uc: uc.company, CompanyUser.objects.filter(user=user))
-    return render(request, 'viewUser.html',{'user':user,'contact':contact,'companies':companies,'private':private});
+    context['companies'] = companies
+    return render(request, 'viewUser.html',context);
+
+def checkout(request):
+    return render(request, 'checkout.html')
+
+def membershipCheckout(request,plan):
+    gateway = braintree.BraintreeGateway(
+        braintree.Configuration(
+            braintree.Environment.Sandbox,
+            merchant_id=BRAINTREE_MERCHANT_ID,
+            public_key=BRAINTREE_PUBLIC_KEY,
+            private_key=BRAINTREE_PRIVATE_KEY
+        )
+    )
+    if request.method == "GET":
+        context = {'plan':plan}
+        try:
+            customer = gateway.customer.find(str(request.user.pk))
+            context['paymentMethods'] = {'creditCards':[],'paypal':[],'applepay':[],'androidpay':[]}
+            for pm in customer.payment_methods:
+                if pm.__class__ == braintree.credit_card.CreditCard:
+                    context['paymentMethods']['creditCards'].append(pm)
+                if pm.__class__ == braintree.paypal_account.PayPalAccount:
+                    context['paymentMethods']['paypal'].append(pm)
+        except braintree.exceptions.unexpected_error.UnexpectedError:
+            pass
+        return render(request, 'membershipCheckout.html',context)
+    elif request.method == "POST":
+        postData = json.loads(request.body)
+        paymentNonce = postData.get('paymentNonce',None)
+        membership = postData.get('membership',None)
+        if paymentNonce == None or membership == None:
+            return Http404("nonce or membership not received")
+        #check if braintree customer already exists
+        try:
+            customer = gateway.customer.find(str(request.user.pk))
+        except braintree.exceptions.not_found_error.NotFoundError:
+            phone = request.user.contact.phone if hasattr(request.user,'contact') else ""
+            #create braintree customer
+            customer = gateway.customer.create({
+                "first_name": request.user.first_name,
+                "last_name": request.user.last_name,
+                "email": request.user.email,
+                "phone": phone,
+                "id": str(request.user.pk),
+                "payment_method_nonce": paymentNonce,
+            })
+            if not customer.is_success:
+                return Http404(customer.error)
+
+        result = gateway.subscription.create({
+            "payment_method_token": customer.payment_methods[0].token,
+            "plan_id": membership,
+        })
+        if result.is_success:
+            membership = Membership(user=request.user,level=membership)
+            membership.save()
+        else:
+            for error in result.errors.deep_errors:
+                print(error.attribute)
+                print(error.code)
+                print(error.message)
+            return Http404(result.errors.deep_errors)
+        return redirect(reverse(views.index))
+
+def addPaymentMethod(request):
+    if request.method == "POST":
+        gateway = braintree.BraintreeGateway(
+            braintree.Configuration(
+                braintree.Environment.Sandbox,
+                merchant_id=BRAINTREE_MERCHANT_ID,
+                public_key=BRAINTREE_PUBLIC_KEY,
+                private_key=BRAINTREE_PRIVATE_KEY
+            )
+        )
+        postData = json.loads(request.body)
+        paymentNonce = postData.get('paymentNonce',None)
+        if paymentNonce == None:
+            return Http404("nonce not received")
+        #check if braintree customer already exists
+        try:
+            customer = gateway.customer.find(str(request.user.pk))
+        except braintree.exceptions.not_found_error.NotFoundError:
+            phone = request.user.contact.phone if hasattr(request.user,'contact') else ""
+            #create braintree customer
+            customer = gateway.customer.create({
+                "first_name": request.user.first_name,
+                "last_name": request.user.last_name,
+                "email": request.user.email,
+                "phone": phone,
+                "id": str(request.user.pk),
+                "payment_method_nonce": paymentNonce,
+            })
+            if not customer.is_success:
+                return Http404(customer.error)
+        #add payment method
+        result = gateway.payment_method.create({
+            "customer_id": str(request.user.pk),
+            "payment_method_nonce": paymentNonce
+        })
+        if result.is_success:
+            paymentMethod = {}
+            if result.payment_method.__class__ == braintree.credit_card.CreditCard:
+                cc = {
+                    "type":result.payment_method.card_type,
+                    "nameOnCard":result.payment_method.cardholder_name,
+                    "last4":result.payment_method.last_4,
+                    "expDate":"{}/{}".format(result.payment_method.expiration_month,result.payment_method.expiration_year[-2:]),
+                    "token":result.payment_method.token
+                }
+                paymentMethod["creditCard"] = cc
+            if result.payment_method.__class__ == braintree.paypal_account.PayPalAccount:
+                paymentMethod['paypal'] = result.payment_method
+            return HttpResponse(json.dumps(paymentMethod))
+
+def getPaymentMethods(request):
+    gateway = braintree.BraintreeGateway(
+        braintree.Configuration(
+            braintree.Environment.Sandbox,
+            merchant_id=BRAINTREE_MERCHANT_ID,
+            public_key=BRAINTREE_PUBLIC_KEY,
+            private_key=BRAINTREE_PRIVATE_KEY
+        )
+    )
+    try:
+        customer = gateway.customer.find(str(request.user.pk))
+        paymentMethods = {'creditCard':[],'paypal':[],'applepay':[],'androidpay':[]}
+        for pm in customer.payment_methods:
+            if pm.__class__ == braintree.credit_card.CreditCard:
+                cc = {
+                    "type":pm.card_type,
+                    "nameOnCard":pm.cardholder_name,
+                    "last4":pm.last_4,
+                    "expDate":"{}/{}".format(pm.expiration_month,pm.expiration_year[-2:]),
+                    "token":pm.token
+                }
+                paymentMethods['creditCard'].append(cc)
+            if pm.__class__ == braintree.paypal_account.PayPalAccount:
+                paymentMethods['paypal'].append(pm)
+    except braintree.exceptions.unexpected_error.UnexpectedError:
+        pass
+    return HttpResponse(json.dumps(paymentMethods))
+
+def clientToken(request):
+    gateway = braintree.BraintreeGateway(
+        braintree.Configuration(
+            braintree.Environment.Sandbox,
+            merchant_id=BRAINTREE_MERCHANT_ID,
+            public_key=BRAINTREE_PUBLIC_KEY,
+            private_key=BRAINTREE_PRIVATE_KEY
+        )
+    )
+    try:
+        customer = gateway.customer.find(str(request.user.pk))
+        token = gateway.client_token.generate({"customer_id":str(request.user.pk)})
+    except braintree.exceptions.not_found_error.NotFoundError:
+        token = gateway.client_token.generate()
+    return HttpResponse(token)
+
+def payment(request):
+    paymentNonce = request.POST['paymentNonce']
+    result = gateway.transaction.sale({
+        "amount": "10.00",
+        "payment_method_nonce": paymentNonce,
+        "options": {
+          "submit_for_settlement": True
+        }
+})
+
+def managePlan(request):
+    return render(request,'manageplan.html')
 
 @login_required
 def signout(request):

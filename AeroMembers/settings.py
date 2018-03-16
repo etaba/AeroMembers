@@ -127,7 +127,7 @@ SOCIAL_AUTH_LINKEDIN_OAUTH2_SECRET = 'XmqMu1g3lWqIwKnq'
 SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = '944435014653-956p3ku952th9lane3qc47s9e389tnka.apps.googleusercontent.com'
 SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = 'Wipng0QKr3fkL_bJyGLMGDNg'
 SOCIAL_AUTH_LOGIN_ERROR_URL = '/accountsettings/'
-SOCIAL_AUTH_LOGIN_REDIRECT_URL = 'index'
+SOCIAL_AUTH_LOGIN_REDIRECT_URL = '/'
 SOCIAL_AUTH_RAISE_EXCEPTIONS = True
 SOCIAL_AUTH_UID_LENGTH = 223 #mysql table index length restriction
 #SOCIAL_AUTH_NEW_USER_REDIRECT_URL = '/'
@@ -142,11 +142,12 @@ SOCIAL_AUTH_PIPELINE = (
     'AeroMembersApp.pipeline.complete_profile',
     'social_core.pipeline.social_auth.associate_user',
     'social_core.pipeline.social_auth.load_extra_data',
+    'AeroMembersApp.pipeline.set_company',
 )
 
 LOGIN_URL = 'login'
 LOGOUT_URL = 'index'
-LOGIN_REDIRECT_URL='index'
+LOGIN_REDIRECT_URL='/'
 
 
 # Internationalization

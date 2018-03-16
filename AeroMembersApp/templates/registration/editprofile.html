@@ -3,7 +3,7 @@
 {%include 'header.html'%}
 <div class="container ">
   <h2>Edit Profile</h2>
-  <form method="post" action="editprofile/" >
+  <form method="post" action="/editprofile/" >
     {% csrf_token %}
     {% for field in userForm %}
       {% if field != userForm.password %}

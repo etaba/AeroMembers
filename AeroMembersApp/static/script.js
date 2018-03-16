@@ -54,23 +54,119 @@ app.controller('forumCtrl', ['$scope', '$http', '$sce', '$cookies', '$document',
 }]);
 
 app.controller('braintreeCtrl', ['$scope','$http',function($scope,$http){
-    var button = document.querySelector('#submit-button');
-    $http({
+    var button = document.querySelector('#submit');
+    /*$http({
             url: "/clienttoken/",
             method: 'GET'
-        }).then(function success(){
+        }).then(function success(response){
             braintree.dropin.create({
-                  authorization: 'CLIENT_TOKEN_FROM_SERVER',
+                  authorization: response.data,
                   container: '#dropin-container'
                 }, function (createErr, instance) {
                   button.addEventListener('click', function () {
                     instance.requestPaymentMethod(function (err, payload) {
-                      // Submit payload.nonce to your server
+                      $http({
+                        url: "/paymentnonce/",
+                        method: 'POST',
+                        data: {'paymentNonce':payload}
+                      })
                     });
                   });
                 });
         },function error(){
             console.log("Client token not received.")
         })
+
+    $scope.purchaseSubscription = function(membershipType){
+        $http({
+            url: "/clienttoken/",
+            method: 'GET'
+        }).then(function success(response){
+            braintree.dropin.create({
+                  authorization: response.data,
+                  container: '#subscribe-payment-container'
+                }, function (createErr, instance) {
+                  button.addEventListener('click', function () {
+                    instance.requestPaymentMethod(function (err, payload) {
+                      $http({
+                        url: "/subscribeuser/",
+                        method: 'POST',
+                        data: {'paymentNonce':payload.nonce,
+                                'membership':$scope.membershipSelected}
+                      }).then(function success(response){
+                        console.log("Payment was successful")
+                      },function error(){
+                        console.log("Error processing your payment")
+                      })
+                    });
+
+                  });
+                });
+        },function error(){
+            console.log("Client token not received.")
+        })
+    }
+    */
+
+
+    loadPaymentMethods = function(){
+        $http({
+            url: "/getpaymentmethods/",
+            method: 'GET'
+        }).then(function success(response){
+            $scope.paymentMethods = response.data
+        },function error(err){
+            console.log("Error processing your payment")
+        })
+    }
+
+    $scope.newPaymentMethod = function(){
+        $http({
+            url: "/clienttoken/",
+            method: 'GET'
+        }).then(function success(response){
+            $scope.showAddPaymentMethod = true
+            braintree.dropin.create({
+                  authorization: response.data,
+                  container: '#braintree-dropin'
+                }, function (createErr, instance) {
+                    $scope.braintreeDropin = instance
+                });
+        },function error(){
+            console.log("Client token not received.")
+        })
+    };
+
+    $scope.addPaymentMethod = function(){
+        $scope.braintreeDropin.requestPaymentMethod(function (err, payload) {
+              $http({
+                url: "/addpaymentmethod/",
+                method: 'POST',
+                data: {'paymentNonce':payload.nonce}
+              }).then(function success(response){
+                $scope.paymentMethods['creditCard'].push(response.data['creditCard'])
+                $scope.paymentMethods.paypal.push(response.data.paypal)
+              },function error(){
+                console.log("Error processing adding payment method")
+              })
+            });
+    };
+
+    $scope.pay = function () {
+        $scope.braintreeDropin.requestPaymentMethod(function (err, payload) {
+            $http({
+                url: "/membershipcheckout/",
+                method: 'POST',
+                data: {'paymentNonce':payload.nonce,
+                        'membership':$scope.plan}
+            }).then(function success(response){
+                console.log("Payment was successful")
+            },function error(err){
+                console.log("Error processing your payment")
+            })
+        })
+    };
+
+    loadPaymentMethods()
     
 }]);

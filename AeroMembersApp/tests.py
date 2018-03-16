@@ -1,5 +1,5 @@
 from django.test import TestCase
-from models import *
+from AeroMembersApp.models import *
 # Create your tests here.
 
 class ForumThreadTests(TestCase):
@@ -9,6 +9,4 @@ class ForumThreadTests(TestCase):
 		threadReply = ThreadReply(content="thread reply content",parent=thread)
 		thread.save()
 		self.assertIs(threadReply.parent,thread)
-		print "replies: ",thread.replies
-		print "all: ",thread.replies.all()
 		self.assertIs(thread.replies.all(),ThreadReply.objects.all())

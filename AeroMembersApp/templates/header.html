@@ -1,57 +1,71 @@
 
-	<nav class="navbar navbar-toggleable-md navbar-inverse bg-inverse fixed-top">
+    <nav class="navbar navbar-toggleable-md navbar-inverse bg-inverse fixed-top">
 
-			<!-- Brand and toggle get grouped for better mobile display -->
-			<a class="navbar-brand" href="/">AeroMembers</a>
-			<!-- Collect the nav links, forms, and other content for toggling -->
-			<button class="navbar-toggler-right navbar-toggler" type="button" data-toggle="collapse" data-target="#headerCollapseableDiv" aria-controls="navbarTogglerDemo01" aria-expanded="false" aria-label="Toggle navigation">
-		    <span class="navbar-toggler-icon"></span>
-		  </button>
-			<div class="collapse navbar-collapse" id='headerCollapseableDiv'>
-				<ul class="navbar-nav mr-auto">
-					<li class="dropdown nav-item">
-						<a href="#" class="nav-link dropdown-toggle" role="button" aria-haspopup="true" data-toggle="dropdown" aria-expanded="false">About <span class="caret"></span></a>
-						<div class="dropdown-menu">
-							<a class="dropdown-item" href="/termsOfService">Terms of Service</a>
-							<a href="#" class="dropdown-item" onClick="alert('For questions or concerns email ???')">Contact</a>
-						</div>
-					</li>
-					<li class="nav-item">
-						<a href="/forum" class="nav-link" role="button" >Forum</a>
-					</li>
-					<li class="nav-item">
-						<a href="/newsletter" class="nav-link" role="button" >Newsletter</a>
-					</li>
-				</ul>
-				<ul class="navbar-nav">
-					{% if user.is_authenticated %}
-					<li class="dropdown nav-item">
-						<a href="#" class="dropdown-toggle nav-link" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">{{ user.first_name }} {{ user.last_name }}<span class="caret"></span></a>
-						<div class="dropdown-menu">
-							<a href="/accountsettings" class="dropdown-item">Account Settings</a>
-							<a href="/editprofile" class="dropdown-item">Profile</a>
-							<a href="/signout" class="dropdown-item">Sign Out</a>
-						</div>
-					</li>
-					{% else %}
-					<li class="nav-item">
-						<a href="/signin" class="nav-link" role="button" >Sign In </a>
-					</li>
-					{% endif %}
-					{% if user.is_authenticated %}
-					<li class="dropdown nav-item">
-						<a href="#" class="dropdown-toggle nav-link" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Company<span class="caret"></span></a>
-						<div class="dropdown-menu dropdown-menu-right">
-							{% for c in companies %}
-							<a href="/viewcompany/{{c.pk}}" class="dropdown-item">{{ c.company }}</a>
-							{% endfor %}
-							<a href="/companyregistration" class="dropdown-item">Add New Company</a>
-						</div>
-					</li>
-					{% endif %}
-				</ul>
-			</div>
-			<!-- /.navbar-collapse -->
+            <!-- Brand and toggle get grouped for better mobile display -->
+            <a class="navbar-brand" href="/">AeroMembers</a>
+            <!-- Collect the nav links, forms, and other content for toggling -->
+            <button class="navbar-toggler-right navbar-toggler" type="button" data-toggle="collapse" data-target="#headerCollapseableDiv" aria-controls="navbarTogglerDemo01" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+          </button>
+            <div class="collapse navbar-collapse" id='headerCollapseableDiv'>
+                <ul class="navbar-nav mr-auto">
+                    <li class="dropdown nav-item">
+                        <a href="#" class="nav-link dropdown-toggle" role="button" aria-haspopup="true" data-toggle="dropdown" aria-expanded="false">About <span class="caret"></span></a>
+                        <div class="dropdown-menu">
+                            <a class="dropdown-item" href="/termsofservice">Terms of Service</a>
+                            <a href="#" class="dropdown-item" onClick="alert('For questions or concerns email ???')">Contact</a>
+                        </div>
+                    </li>
+                    <li class="nav-item">
+                        <a href="/forum" class="nav-link" role="button" >Forum</a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="/newsletter" class="nav-link" role="button" >Newsletter</a>
+                    </li>
+                </ul>
+                <ul class="navbar-nav">
+                    {% if user.is_authenticated %}
+                    <li class="dropdown nav-item">
+                        <a href="#" class="dropdown-toggle nav-link" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">{{ user.first_name }} {{ user.last_name }}<span class="caret"></span></a>
+                        <div class="dropdown-menu">
+                            {% if membership != None %}
+                            <a href="/manageplan" class="dropdown-item">Manage Membership ({{ membership }})</a>
+                            {% endif %}
+                            <a href="/accountsettings" class="dropdown-item">Account Settings</a>
+                            <a href="/editprofile" class="dropdown-item">Profile</a>
+                            <a href="/signout" class="dropdown-item">Sign Out</a>
+                        </div>
+                    </li>
+                    {% else %}
+                    <li class="nav-item">
+                        <a href="/signin" class="nav-link" role="button" >Sign In </a>
+                    </li>
+                    {% endif %}
+                    {% if currCompany != None %}
+                    <li class="dropdown nav-item">
+                        <a href="#" class="dropdown-toggle nav-link" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">{{ currCompany }}<span class="caret"></span></a>
+                        <div class="dropdown-menu dropdown-menu-right">
+                            <a href="/viewcompany/{{currCompany.pk}}" class="dropdown-item">Details</a>
+                            <a href="/setcompany" class="dropdown-item">Select Other Company</a>
+                        </div>
+                    </li>
+                    {% else %}
+                        {% if user.is_authenticated %}
+                        <li class="dropdown nav-item">
+                            <a href="#" class="dropdown-toggle nav-link" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Companies
+                                <span class="caret"></span></a>
+                            <div class="dropdown-menu dropdown-menu-right">
+                                {% for c in companies %}
+                                <a href="/setcompany/{{c.company.pk}}/" class="dropdown-item">{{ c.company }}</a>
+                                {% endfor %}
+                                <a href="/companyregistration" class="dropdown-item">Add New Company</a>
+                            </div>
+                        </li>
+                        {% endif %}
+                    {% endif %}
+                </ul>
+            </div>
+            <!-- /.navbar-collapse -->
 
-	</nav>
+    </nav>
 <br><br><br>

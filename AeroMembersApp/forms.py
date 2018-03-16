@@ -64,7 +64,7 @@ class ProfileForm(forms.ModelForm):
 class CompanyForm(BaseForm):
     class Meta:
         model = Company
-        fields = ('name', 'department', 'membership_level','cage_code', 'number_of_employees', 'activity_type','naics','description')
+        fields = ('name', 'department','cage_code', 'number_of_employees', 'activity_type','naics','description')
         widgets = {
             'name': forms.TextInput(attrs={'placeholder': 'Name'}),
             'department': forms.TextInput(attrs={'placeholder': 'Department'}),

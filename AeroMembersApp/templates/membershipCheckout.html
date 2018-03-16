@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{%block content%}
+{%include 'header.html'%}
+{%verbatim%}
+<div class="container text-center" ng-controller="braintreeCtrl">
+    Your order: 
+    <span ng-model="plan" >{{ plan }}</span>
+    <br><br>
+    <div ng-show="paymentMethods != undefined">
+        Select Payment Method:
+        <br>
+            <div ng-show="paymentMethods.creditCard.length > 0" class="container border">
+                <div class="row">
+                    <div class="col-sm"> Your credit/debit cards</div>
+                    <!--<div class="col-md\">Name on card</div>-->
+                    <div class="col-sm"\>Expires on</div>
+                </div>
+                <hr>
+                <div class="row" ng-repeat="cc in paymentMethods.creditCard">
+                    <div class="col-sm">
+                        <label><input type="radio" value="{{cc.token}}" ng-model="payMethod">{{cc.type}} ending in {{cc.last4}}</label>
+                    </div>
+                    <!--Name on Card?
+                    <div class="col-sm">
+                        {{cc.cardholder_name}}
+                    </div>-->
+                    <div class="col-sm">
+                        {{cc.expDate}}
+                    </div>
+                </div>
+            </div>
+    </div>
+
+  <a href="#" ng-click="newPaymentMethod()" ng-show="!showAddPaymentMethod">New Payment Method</a>
+  <div ng-show="showAddPaymentMethod">
+    <div id="braintree-dropin"></div>
+    <button ng-click="addPaymentMethod()">Add Payment Method</button>
+  </div>
+  <br><br>
+  <button ng-click="pay()">Continue</button>
+</div>
+{%endverbatim%}
+{%endblock%}

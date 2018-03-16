@@ -36,7 +36,7 @@ INDUSTRY_CHOICES = (
 )
 
 class Profile(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE, unique=True)
+    user = models.OneToOneField(User, on_delete=models.CASCADE,related_name='profile', unique=True)
         #User has:
             #username
             #first_name
@@ -57,8 +57,8 @@ class Profile(models.Model):
         return '%s %s' % (self.user.first_name, self.user.last_name)
 
 class Contact(models.Model):
-    user = models.OneToOneField(User,on_delete=models.CASCADE, unique=True, null=True)
-    company = models.OneToOneField('Company',on_delete=models.CASCADE, unique=True, null=True)
+    user = models.OneToOneField(User,on_delete=models.CASCADE,related_name='contact', unique=True, null=True)
+    company = models.OneToOneField('Company',on_delete=models.CASCADE,related_name='contact', unique=True, null=True)
     street_address = models.CharField(max_length=200, blank=True)
     city = models.CharField(max_length=200, blank=True)
     state = models.CharField(max_length=200, blank=True)
@@ -66,14 +66,14 @@ class Contact(models.Model):
     phone = models.CharField(max_length=20, blank=True)
 
 class Resume(models.Model):
-    user = models.OneToOneField(User,on_delete=models.CASCADE, unique=True)
+    user = models.OneToOneField(User,on_delete=models.CASCADE,related_name='resume', unique=True)
     #resumeFile = models.FileField(upload_to="resume/File/Directory", blank=True)
     education = models.CharField(max_length=200, blank=True)
     awards = models.TextField(max_length=200, blank=True)
     certifications = models.TextField(max_length=200, blank=True)
 
 class JobDescription(models.Model):
-    resume = models.OneToOneField('Resume', on_delete=models.CASCADE, unique=True)
+    profile = models.OneToOneField('Profile',related_name='jobDescription', on_delete=models.CASCADE)
     industry = models.CharField(max_length=200, choices=INDUSTRY_CHOICES)
     job_title = models.CharField(max_length=200)
     salary = models.IntegerField(blank=True, help_text="Will not be visible to other users.")
@@ -88,11 +88,6 @@ class CompanyUser(models.Model):
         unique_together = ("user","company")
 
 class Company(models.Model):
-    MEMBERSHIP_LEVEL = [
-        ("S","Silver"),
-        ("G","Gold"),
-        ("P","Platinum")
-    ]
     ACTIVITY_TYPE = [
         ("CM","Contract Management"),
         ("DES","Design"),
@@ -115,7 +110,6 @@ class Company(models.Model):
     ]
     name = models.CharField(max_length=200)
     department = models.CharField(max_length=200)
-    membership_level = models.CharField(max_length=200, choices=MEMBERSHIP_LEVEL)
     cage_code = models.CharField(max_length=6, null=True, blank=True)
     number_of_employees = models.IntegerField()
     activity_type = models.CharField(max_length = 200, choices=ACTIVITY_TYPE)
@@ -123,6 +117,19 @@ class Company(models.Model):
     description = models.TextField(max_length=1000, blank=True)
     def __str__(self):
         return self.name
+
+class Membership(models.Model):
+    MEMBERSHIP_LEVEL = [
+        ("SILVER_USER","Silver"),
+        ("GOLD_USER","Gold"),
+        ("PLATINUM_USER","Platinum"),
+        ("SILVER_COMPANY","Silver"),
+        ("GOLD_COMPANY","Gold"),
+        ("SPONSOR_COMPANY","Sponsor"),
+    ]
+    level = models.CharField(max_length=200, choices=MEMBERSHIP_LEVEL)
+    company = models.OneToOneField('Company',on_delete=models.CASCADE,related_name='membership',unique=True, null=True)
+    user = models.OneToOneField(User,on_delete=models.CASCADE,related_name='membership', unique=True, null=True)
 
 '''
 class NAICS(models.Model):
@@ -139,7 +146,7 @@ class Post(models.Model):
     score = models.IntegerField(default=0)
     createdOn = models.DateTimeField(default=timezone.now)
     editedOn = models.DateTimeField(default = timezone.now)
-    createdBy = models.ForeignKey(User)
+    createdBy = models.ForeignKey(User,models.DO_NOTHING)
     quotedText = models.TextField(max_length=1000,null=True,blank=True)
     content_type = models.ForeignKey(ContentType,on_delete=models.CASCADE,null=True)
     object_id = models.PositiveIntegerField(null=True)
@@ -148,12 +155,11 @@ class Post(models.Model):
 
     def getComments(self):
         children = self.comments.all().order_by('createdOn')
-        print "my id: ",self.pk,"num children: ",len(children)
         commentDict = self.__dict__.copy()
         del commentDict['_state']
-        commentDict['createdOn'] = unicode(commentDict['createdOn'].replace(microsecond=0))
-        commentDict['editedOn'] = unicode(commentDict['editedOn'].replace(microsecond=0))
-        commentDict['createdBy'] = self.createdBy.username
+        commentDict['createdOn'] = commentDict['createdOn'].replace(microsecond=0)
+        commentDict['editedOn'] = commentDict['editedOn'].replace(microsecond=0)
+        commentDict['createdBy'] = {"username":self.createdBy.username,"id":self.createdBy.pk}
         commentDict['comments'] = [child.getComments() for child in children]
         #out = [commentDict]
         #for child in children:
@@ -185,7 +191,7 @@ class Thread(Post):
         return self.title
 
 class UserUpvote(models.Model):
-    user = models.ForeignKey(User)
+    user = models.ForeignKey(User,models.DO_NOTHING)
     postId = models.IntegerField()
     class Meta:
         unique_together = ("user","postId")
