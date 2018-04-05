@@ -1,30 +1,16 @@
 {% extends "base.html" %}
 {%block content%}
 {%include 'header.html'%}
-<div class="container text-center" ng-controller="braintreeCtrl">
-<div class="radio">
-  <label><input type="radio" ng-model="membershipSelected" value="SILVER_USER">Silver</label>
-</div>
-<div class="radio">
-  <label><input type="radio" ng-model="membershipSelected" value="GOLD_USER">Gold</label>
-</div>
-<div class="radio">
-  <label><input type="radio" ng-model="membershipSelected" value="PLATINUM_USER">Platinum</label>
-</div>
-<!--
-<div class="radio">
-  <label><input type="radio" ng-model="membershipSelected" value="silverCompany">Silver</label>
-</div>
-<div class="radio">
-  <label><input type="radio" ng-model="membershipSelected" value="goldCompany">Gold</label>
-</div>
-<div class="radio">
-  <label><input type="radio" ng-model="membershipSelected" value="sponsorCompany">Sponsor</label>
-</div>
--->
+<div class="container text-center" ng-controller="membershipCtrl">
+	{% for plan in plans %}
+		{% if plan != membership %}
+		<div class="radio">
+		  <label><input type="radio" ng-model="membershipSelected" value="{{plan.pk}}">{{plan.name}}</label>
+		  <p>{{plan.description}}</p>
+		</div>
+		{% endif %}
+	{% endfor %}
 
-
-  <div id="subscribe-payment-container"></div>
-  {%verbatim%}<a ng-href="/membershipcheckout/{{membershipSelected}}">Purchase</a>{%endverbatim%}
+  <a href="#" ng-click="orderAndCheckout(membershipSelected)">Purchase</a>
 </div>
 {%endblock%}

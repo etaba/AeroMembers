@@ -30,6 +30,8 @@
                         <div class="dropdown-menu">
                             {% if membership != None %}
                             <a href="/manageplan" class="dropdown-item">Manage Membership ({{ membership }})</a>
+                            {% else %}
+                            <a href="/manageplan" class="dropdown-item">Upgrade Membership</a>
                             {% endif %}
                             <a href="/accountsettings" class="dropdown-item">Account Settings</a>
                             <a href="/editprofile" class="dropdown-item">Profile</a>

@@ -7,6 +7,7 @@ from django.contrib import messages
 from AeroMembersApp.forms import *
 from social_django.models import UserSocialAuth
 from django.core.serializers.json import DjangoJSONEncoder
+from django.core import serializers
 from pprint import pprint
 import json
 import braintree
@@ -365,9 +366,6 @@ def viewUser(request,userId):
     return render(request, 'viewUser.html',context);
 
 def checkout(request):
-    return render(request, 'checkout.html')
-
-def membershipCheckout(request,plan):
     gateway = braintree.BraintreeGateway(
         braintree.Configuration(
             braintree.Environment.Sandbox,
@@ -377,18 +375,19 @@ def membershipCheckout(request,plan):
         )
     )
     if request.method == "GET":
-        context = {'plan':plan}
-        try:
-            customer = gateway.customer.find(str(request.user.pk))
-            context['paymentMethods'] = {'creditCards':[],'paypal':[],'applepay':[],'androidpay':[]}
-            for pm in customer.payment_methods:
-                if pm.__class__ == braintree.credit_card.CreditCard:
-                    context['paymentMethods']['creditCards'].append(pm)
-                if pm.__class__ == braintree.paypal_account.PayPalAccount:
-                    context['paymentMethods']['paypal'].append(pm)
-        except braintree.exceptions.unexpected_error.UnexpectedError:
-            pass
-        return render(request, 'membershipCheckout.html',context)
+        #try:
+        #    customer = gateway.customer.find(str(request.user.pk))
+        #    context['paymentMethods'] = {'creditCards':[],'paypal':[],'applepay':[],'androidpay':[]}
+        #    for pm in customer.payment_methods:
+        #        if pm.__class__ == braintree.credit_card.CreditCard:
+        #            context['paymentMethods']['creditCards'].append(pm)
+        #        if pm.__class__ == braintree.paypal_account.PayPalAccount:
+        #            context['paymentMethods']['paypal'].append(pm)
+        #except braintree.exceptions.unexpected_error.UnexpectedError:
+        #    pass
+
+
+        return render(request, 'checkout.html')
     elif request.method == "POST":
         postData = json.loads(request.body)
         paymentNonce = postData.get('paymentNonce',None)
@@ -477,7 +476,7 @@ def addPaymentMethod(request):
                 paymentMethod['paypal'] = result.payment_method
             return HttpResponse(json.dumps(paymentMethod))
 
-def getPaymentMethods(request):
+'''def getPaymentMethods(request):
     gateway = braintree.BraintreeGateway(
         braintree.Configuration(
             braintree.Environment.Sandbox,
@@ -503,7 +502,15 @@ def getPaymentMethods(request):
                 paymentMethods['paypal'].append(pm)
     except braintree.exceptions.unexpected_error.UnexpectedError:
         pass
-    return HttpResponse(json.dumps(paymentMethods))
+    return HttpResponse(json.dumps(paymentMethods))'''
+
+def getOrder(request):
+    #get open order
+    orderQS = Order.objects.filter(requestingUser=request.user,status="O")
+    if len(orderQS) == 1:
+        return HttpResponse(serializers.serialize("json",orderQS))
+    else:
+        return Http404("order error")
 
 def clientToken(request):
     gateway = braintree.BraintreeGateway(
@@ -532,7 +539,34 @@ def payment(request):
 })
 
 def managePlan(request):
-    return render(request,'manageplan.html')
+    if request.method == 'GET':
+        plans = Item.objects.filter(type="UM")
+        return render(request,'manageplan.html',{"plans":plans})
+
+def addOrderLine(request):
+    if request.method == 'POST':
+        postData = json.loads(request.body)
+        item = Item.objects.get(pk=postData['item'])
+        try:
+            activeOrder = Order.objects.filter(requestingUser=request.user,status="O").get()
+        except:
+            activeOrder = Order(requestingUser=request.user)
+            activeOrder.save()
+        orderLine = OrderLine(quantity=1,item=item,order=activeOrder)
+        orderLine.save()
+    return HttpResponse()
+
+def cancelOrder(request):
+    if request.method == 'POST':
+        postData = json.loads(request.body)
+        order = Order.objects.get(pk=postData['order'])
+        if order.requestingUser == request.user and order.status == "A":
+            order.status = "CA"
+            order.save()
+            return HttpResponse()
+        else:
+            return Http404("could not cancel order "+postData['order'])
+
 
 @login_required
 def signout(request):

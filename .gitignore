@@ -1,7 +1,10 @@
 # Temporary Stuff #
 ###################
-/AeroMembersApp/static/temp/*
+/AeroMembersApp/static/tmp/*
 
+# Migrations #
+###################
+/AeroMembersApp/migrations/0*
 
 # Compiled source #
 ###################

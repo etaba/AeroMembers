@@ -34,10 +34,9 @@ urlpatterns = [
     path('thread/<int:threadId>/editcomment/',views.editComment),
     path('thread/<int:threadId>/deletepost/<int:postId>',views.deletePost),
     path('clienttoken/', views.clientToken),
-    path('checkout/', views.checkout),
-    path('membershipcheckout/<str:plan>', views.membershipCheckout),    
-    path('membershipcheckout/', views.membershipCheckout),
-    path('getpaymentmethods/', views.getPaymentMethods),
+    path('checkout/', views.checkout),   
+    path('addorderline/', views.addOrderLine),
+    path('getorder/', views.getOrder),
     path('addpaymentmethod/', views.addPaymentMethod),
     path('manageplan/', views.managePlan),
 ]

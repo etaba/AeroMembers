@@ -1,0 +1,64 @@
+[
+  {
+    "model": "AeroMembersApp.item",
+    "pk": 1,
+    "fields": {
+      "name": "Silver",
+      "type": "UM",
+      "description":"Silver membership for user",
+      "price": 10
+    }
+  },
+  {
+    "model": "AeroMembersApp.item",
+    "pk": 2,
+    "fields": {
+      "name": "Gold",
+      "type": "UM",
+      "description":"Gold membership for user",
+      "price": 10
+    }
+  },
+  {
+    "model": "AeroMembersApp.item",
+    "pk": 3,
+    "fields": {
+      "name": "Platinum",
+      "type": "UM",
+      "description":"Platinum membership for user",
+      "price": 10
+    }
+  },
+  {
+    "model": "AeroMembersApp.item",
+    "pk": 4,
+    "fields": {
+      "name": "Silver",
+      "type": "CM",
+      "description":"Silver membership for company",
+      "price": 10
+    }
+  },
+  {
+    "model": "AeroMembersApp.item",
+    "pk": 5,
+    "fields": {
+      "name": "Gold",
+      "type": "CM",
+      "description":"Gold membership for company",
+      "price": 10
+
+    }
+  },
+  {
+    "model": "AeroMembersApp.item",
+    "pk": 6,
+    "fields": {
+      "name": "Sponsor",
+      "type": "CM",
+      "description":"Sponsor membership for company",
+      "price": 10
+    }
+  }
+
+]

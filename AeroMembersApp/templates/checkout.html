@@ -1,8 +1,21 @@
 {% extends "base.html" %}
 {%block content%}
 {%include 'header.html'%}
-<div class="container text-center" ng-controller="braintreeCtrl">
-  <div id="dropin-container"></div>
-  <button id="submit">Request payment method</button>
+<div class="container text-center" ng-controller="checkoutCtrl">
+    Your order: 
+    <br><br>
+    {%verbatim%}
+  	<div class="border rounded" ng-repeat="orderLine in order.orderLines">
+  		{{ orderLine.item }}
+  	</div>
+  	{% endverbatim %}
+  <a href="#" ng-click="newPaymentMethod()" ng-show="!showAddPaymentMethod">New Payment Method</a>
+  <div ng-show="showAddPaymentMethod">
+    <div id="braintree-dropin"></div>
+    <button ng-click="addPaymentMethod()">Add Payment Method</button>
+  </div>
+
+  <br><br>
+  <button ng-click="pay()">Continue</button>
 </div>
 {%endblock%}

@@ -4,11 +4,8 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.contrib.contenttypes.fields import GenericForeignKey,GenericRelation
 from django.contrib.contenttypes.models import ContentType
-from django.db.models.signals import post_save
-from django.dispatch import receiver
 from django.utils import timezone
-from django.core import serializers
-from django.forms.models import model_to_dict
+
 from pprint import pprint
 
 User._meta.get_field('email')._unique = True
@@ -186,7 +183,7 @@ class Thread(Post):
     title = models.CharField(max_length=200)
     status = models.CharField(max_length=200,choices=STATUS,default="O")
     threadType = models.CharField(max_length=200,choices=TYPE)
-    tags = models.ManyToManyField('Tag',null=True,blank=True)
+    tags = models.ManyToManyField('Tag',blank=True)
     def __str__(self):
         return self.title
 
@@ -202,6 +199,44 @@ class Tag(models.Model):
     threads = models.ManyToManyField('Thread')
     def __str__(self):
         return self.name
+
+class Order(models.Model):
+    STATUS = [
+        ("O","Open"),
+        ("C","Closed"),
+        ("CA","Canceled"),
+        ("IP","In Progress")
+    ]
+    status = models.CharField(max_length=200,choices=STATUS,default="O")
+    date = models.DateTimeField(default=timezone.now)
+    requestingUser = models.ForeignKey(User,related_name='order',on_delete=models.CASCADE)
+    requestingCompany = models.ForeignKey('Company',related_name='order',on_delete=models.CASCADE,null=True)
+
+class OrderLine(models.Model):
+    order = models.ForeignKey('Order',related_name='OrderLines',on_delete=models.CASCADE)
+    quantity = models.IntegerField(default=1)
+    price = models.FloatField(default=0)
+    item = models.ForeignKey('Item',on_delete=models.CASCADE)
+    discount = models.OneToOneField('Discount',related_name='orderLine',on_delete=models.DO_NOTHING,null=True )
+
+class Item(models.Model):
+    TYPES = [
+        ("UM","User Membership"),
+        ("CM","Company Membership"),
+        ("R","Resource")
+    ]
+    name = models.CharField(max_length=200)
+    type = models.CharField(max_length=200,choices=TYPES)
+    description = models.TextField(max_length=1000)
+    price = models.FloatField()
+    class Meta:
+        unique_together = ("type","name")
+
+class Discount(models.Model):
+    name = models.CharField(max_length=200,unique=True)
+    active = models.BooleanField()
+    rate = models.FloatField()
+    expiration = models.DateField()
 
 
 

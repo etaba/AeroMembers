@@ -53,7 +53,22 @@ app.controller('forumCtrl', ['$scope', '$http', '$sce', '$cookies', '$document',
 
 }]);
 
-app.controller('braintreeCtrl', ['$scope','$http',function($scope,$http){
+app.controller('membershipCtrl', ['$scope','$http','$location',function($scope,$http,$location){
+    $scope.orderAndCheckout = function(item){
+        $http({
+            url: "/addorderline/",
+            method: 'POST',
+            data: {'item':item}
+        }).then(function success(response){
+            $location.href = '/checkout'
+        },function error(){
+            console.log("Client token not received.")
+        })
+    };
+}]);
+
+
+app.controller('checkoutCtrl', ['$scope','$http',function($scope,$http){
     var button = document.querySelector('#submit');
     /*$http({
             url: "/clienttoken/",
@@ -108,19 +123,18 @@ app.controller('braintreeCtrl', ['$scope','$http',function($scope,$http){
     }
     */
 
-
-    loadPaymentMethods = function(){
+    init = function(){
+        //load active order
         $http({
-            url: "/getpaymentmethods/",
-            method: 'GET'
+            url: "/getorder/",
+            method: 'GET',
         }).then(function success(response){
-            $scope.paymentMethods = response.data
-        },function error(err){
-            console.log("Error processing your payment")
+            $scope.order = response.data[0].fields
+        },function error(){
+            console.log("No order found sorry")
         })
-    }
 
-    $scope.newPaymentMethod = function(){
+        /*load payment methods
         $http({
             url: "/clienttoken/",
             method: 'GET'
@@ -134,8 +148,8 @@ app.controller('braintreeCtrl', ['$scope','$http',function($scope,$http){
                 });
         },function error(){
             console.log("Client token not received.")
-        })
-    };
+        })*/
+    }
 
     $scope.addPaymentMethod = function(){
         $scope.braintreeDropin.requestPaymentMethod(function (err, payload) {
@@ -155,7 +169,7 @@ app.controller('braintreeCtrl', ['$scope','$http',function($scope,$http){
     $scope.pay = function () {
         $scope.braintreeDropin.requestPaymentMethod(function (err, payload) {
             $http({
-                url: "/membershipcheckout/",
+                url: "/checkout/",
                 method: 'POST',
                 data: {'paymentNonce':payload.nonce,
                         'membership':$scope.plan}
@@ -167,6 +181,6 @@ app.controller('braintreeCtrl', ['$scope','$http',function($scope,$http){
         })
     };
 
-    loadPaymentMethods()
+    init()
     
 }]);
