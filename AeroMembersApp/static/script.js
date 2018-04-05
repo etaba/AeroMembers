@@ -60,7 +60,7 @@ app.controller('membershipCtrl', ['$scope','$http','$location',function($scope,$
             method: 'POST',
             data: {'item':item}
         }).then(function success(response){
-            $location.href = '/checkout'
+            $location.url('checkout/')
         },function error(){
             console.log("Client token not received.")
         })
