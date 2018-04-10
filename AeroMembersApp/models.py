@@ -158,9 +158,6 @@ class Post(models.Model):
         commentDict['editedOn'] = commentDict['editedOn'].replace(microsecond=0)
         commentDict['createdBy'] = {"username":self.createdBy.username,"id":self.createdBy.pk}
         commentDict['comments'] = [child.getComments() for child in children]
-        #out = [commentDict]
-        #for child in children:
-        #    out+=child.getComments()
         return commentDict
         
     def Post(parent,content,createdBy):
@@ -213,11 +210,11 @@ class Order(models.Model):
     requestingCompany = models.ForeignKey('Company',related_name='order',on_delete=models.CASCADE,null=True)
 
 class OrderLine(models.Model):
-    order = models.ForeignKey('Order',related_name='OrderLines',on_delete=models.CASCADE)
+    order = models.ForeignKey('Order',related_name='orderLines',on_delete=models.CASCADE)
     quantity = models.IntegerField(default=1)
     price = models.FloatField(default=0)
     item = models.ForeignKey('Item',on_delete=models.CASCADE)
-    discount = models.OneToOneField('Discount',related_name='orderLine',on_delete=models.DO_NOTHING,null=True )
+    discount = models.OneToOneField('Discount',related_name='discount',on_delete=models.DO_NOTHING,null=True )
 
 class Item(models.Model):
     TYPES = [
@@ -233,7 +230,7 @@ class Item(models.Model):
         unique_together = ("type","name")
 
 class Discount(models.Model):
-    name = models.CharField(max_length=200,unique=True)
+    code = models.CharField(max_length=200,unique=True)
     active = models.BooleanField()
     rate = models.FloatField()
     expiration = models.DateField()

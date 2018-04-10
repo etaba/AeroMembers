@@ -9,6 +9,7 @@ from social_django.models import UserSocialAuth
 from django.core.serializers.json import DjangoJSONEncoder
 from django.core import serializers
 from pprint import pprint
+from django.core.exceptions import ObjectDoesNotExist
 import json
 import braintree
 
@@ -248,7 +249,7 @@ def thread(request,threadId):
             post.createdBy = request.user
             post.save()
             thread.refresh_from_db()
-    if len(UserUpvote.objects.filter(user=request.user,postId=thread.pk))>0:
+    if UserUpvote.objects.filter(user=request.user,postId=thread.pk).exists():
         threadScoreClass = "upvoted"
     else:
         threadScoreClass = ""
@@ -262,7 +263,7 @@ def comments(request,threadId):
         thread = Thread.objects.get(pk=threadId)
         threadJSON = thread.getComments()
         for comment in threadJSON['comments']:
-            if len(UserUpvote.objects.filter(user=request.user,postId=comment['id']))>0:
+            if UserUpvote.objects.filter(user=request.user,postId=comment['id']).exists():
                 comment['scoreClass'] = "upvoted"
             else:
                 comment['scoreClass'] = ""
@@ -356,10 +357,10 @@ def viewUser(request,userId):
     user  = User.objects.get(pk=userId)
     context = {'user':user}
     contact = Contact.objects.filter(user=user)
-    if len(contact) > 0:
+    if contact.exists():
         context['contact'] = contact.get()
     profile = Profile.objects.filter(user=user)
-    if len(profile) > 0:
+    if profile.exists():
         context['private'] = profile.get().private
     companies = map(lambda uc: uc.company, CompanyUser.objects.filter(user=user))
     context['companies'] = companies
@@ -506,11 +507,12 @@ def addPaymentMethod(request):
 
 def getOrder(request):
     #get open order
-    orderQS = Order.objects.filter(requestingUser=request.user,status="O")
-    if len(orderQS) == 1:
-        return HttpResponse(serializers.serialize("json",orderQS))
+    orderLines = OrderLine.objects.filter(order__requestingUser=request.user,order__status="O")
+    if orderLines.exists():
+        response = list(orderLines.values('item__name','item__description','price','discount'))
     else:
-        return Http404("order error")
+        response = {}
+    return HttpResponse(json.dumps(response))
 
 def clientToken(request):
     gateway = braintree.BraintreeGateway(
@@ -552,7 +554,7 @@ def addOrderLine(request):
         except:
             activeOrder = Order(requestingUser=request.user)
             activeOrder.save()
-        orderLine = OrderLine(quantity=1,item=item,order=activeOrder)
+        orderLine = OrderLine(item=item,order=activeOrder)
         orderLine.save()
     return HttpResponse()
 
@@ -566,6 +568,23 @@ def cancelOrder(request):
             return HttpResponse()
         else:
             return Http404("could not cancel order "+postData['order'])
+
+def applyDiscount(request):
+    if request.method == 'POST':
+        postData = json.loads(request.body)
+        discountCode = postData['discountCode']
+        orderLine = postData['orderLine']
+        discount = Discount.objects.get(code=discountCode)
+        orderLine = OrderLine.objects.get(pk=orderLine)
+        if discount.exists() and discount.active and discount.expiration < date.today() and orderLine.exists():
+            orderLine.discount = discount
+            orderLine.price = orderLine.price * (1-discount.rate)
+            orderLine.save()
+            return getOrder()
+        else:
+            return Http404("discount or orderline not found")
+
+
 
 
 @login_required

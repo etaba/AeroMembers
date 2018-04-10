@@ -53,14 +53,14 @@ app.controller('forumCtrl', ['$scope', '$http', '$sce', '$cookies', '$document',
 
 }]);
 
-app.controller('membershipCtrl', ['$scope','$http','$location',function($scope,$http,$location){
+app.controller('membershipCtrl', ['$scope','$http','$window',function($scope,$http,$window){
     $scope.orderAndCheckout = function(item){
         $http({
             url: "/addorderline/",
             method: 'POST',
             data: {'item':item}
         }).then(function success(response){
-            $location.url('checkout/')
+            $window.location.href = '/checkout/'
         },function error(){
             console.log("Client token not received.")
         })
@@ -129,7 +129,7 @@ app.controller('checkoutCtrl', ['$scope','$http',function($scope,$http){
             url: "/getorder/",
             method: 'GET',
         }).then(function success(response){
-            $scope.order = response.data[0].fields
+            $scope.order = response.data
         },function error(){
             console.log("No order found sorry")
         })
@@ -180,6 +180,18 @@ app.controller('checkoutCtrl', ['$scope','$http',function($scope,$http){
             })
         })
     };
+
+    $scope.applyDiscount= function(code){
+        $http({
+                url: "/applyDiscount/",
+                method: 'POST',
+                data: {'discountCode':code}
+              }).then(function success(response){
+                $scope.order = response.data
+              },function error(){
+                console.log("Error processing discount")
+              })
+    }
 
     init()
     
