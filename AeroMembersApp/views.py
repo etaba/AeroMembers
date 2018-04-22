@@ -10,8 +10,8 @@ from django.core.serializers.json import DjangoJSONEncoder
 from django.core import serializers
 from pprint import pprint
 from django.core.exceptions import ObjectDoesNotExist
-import json
-import braintree
+import json, braintree
+from datetime import datetime
 
 BRAINTREE_MERCHANT_ID = "5vgz24sws5f9jw2k"
 BRAINTREE_PUBLIC_KEY = "2wcngqdvwszvfyq7"
@@ -386,15 +386,12 @@ def checkout(request):
         #            context['paymentMethods']['paypal'].append(pm)
         #except braintree.exceptions.unexpected_error.UnexpectedError:
         #    pass
-
-
         return render(request, 'checkout.html')
     elif request.method == "POST":
         postData = json.loads(request.body)
         paymentNonce = postData.get('paymentNonce',None)
-        membership = postData.get('membership',None)
-        if paymentNonce == None or membership == None:
-            return Http404("nonce or membership not received")
+        if paymentNonce == None:
+            raise Http404("Braintree payment nonce not received")
         #check if braintree customer already exists
         try:
             customer = gateway.customer.find(str(request.user.pk))
@@ -410,22 +407,61 @@ def checkout(request):
                 "payment_method_nonce": paymentNonce,
             })
             if not customer.is_success:
-                return Http404(customer.error)
-
-        result = gateway.subscription.create({
-            "payment_method_token": customer.payment_methods[0].token,
-            "plan_id": membership,
-        })
-        if result.is_success:
-            membership = Membership(user=request.user,level=membership)
-            membership.save()
+                raise Http404(customer.error)
+        #retrieve order
+        orderQ = Order.objects.filter(requestingUser=request.user,status="O")
+        if not orderQ.exists():
+            raise Http404("No open orders found for user.")
         else:
-            for error in result.errors.deep_errors:
-                print(error.attribute)
-                print(error.code)
-                print(error.message)
-            return Http404(result.errors.deep_errors)
-        return redirect(reverse(views.index))
+            order = orderQ.get()
+
+        #process order
+        if order.type == "R":
+            #membership/recurring payment order
+            subscription = {
+                "payment_method_token": customer.payment_methods[0].token,
+                "plan_id": order.orderLines[0].item.braintreeName,
+            }
+            discount = order.orderLines[0].discount
+            if discount != None:
+                subscription['discounts'] = {'add':{'inherited_from_id':discount.braintreeName}}
+
+            #TODO: deal with preexisting or coexisting memberships
+
+            result = gateway.subscription.create(subscription)
+            if result.is_success:
+                #TODO: attach transaction id?
+                membership = Membership(user=request.user,level=membership)
+                membership.save()
+
+            else:
+                for error in result.errors.deep_errors:
+                    print(error.attribute)
+                    print(error.code)
+                    print(error.message)
+                raise Http404(result.errors.deep_errors)
+
+        elif order.type == "S":
+            #regular resource items
+            total = sum([o.price for o in order.orderLines])
+            result = gateway.transaction.sale({  
+                "amount": str(total),
+                "payment_method_nonce": paymentNonce,
+                "options": {
+                  "submit_for_settlement": True
+                }})
+            if result.is_success:
+                #TODO: attach transaction id?
+                #TODO: process purchase here: start download, associate item with user, etc
+                pass
+            else:
+                for error in result.errors.deep_errors:
+                    print(error.attribute)
+                    print(error.code)
+                    print(error.message)
+                raise Http404(result.errors.deep_errors)
+        #TODO: return transaction id or redirect to confirmation page
+        return HttpResponse("Payment success")
 
 def addPaymentMethod(request):
     if request.method == "POST":
@@ -509,9 +545,9 @@ def getOrder(request):
     #get open order
     orderLines = OrderLine.objects.filter(order__requestingUser=request.user,order__status="O")
     if orderLines.exists():
-        response = list(orderLines.values('item__name','item__description','price','discount'))
+        response = list(orderLines.values('pk','item__name','item__type','item__description','price','discount__rate'))
     else:
-        response = {}
+        response = []
     return HttpResponse(json.dumps(response))
 
 def clientToken(request):
@@ -530,16 +566,6 @@ def clientToken(request):
         token = gateway.client_token.generate()
     return HttpResponse(token)
 
-def payment(request):
-    paymentNonce = request.POST['paymentNonce']
-    result = gateway.transaction.sale({
-        "amount": "10.00",
-        "payment_method_nonce": paymentNonce,
-        "options": {
-          "submit_for_settlement": True
-        }
-})
-
 def managePlan(request):
     if request.method == 'GET':
         plans = Item.objects.filter(type="UM")
@@ -549,40 +575,76 @@ def addOrderLine(request):
     if request.method == 'POST':
         postData = json.loads(request.body)
         item = Item.objects.get(pk=postData['item'])
-        try:
-            activeOrder = Order.objects.filter(requestingUser=request.user,status="O").get()
-        except:
-            activeOrder = Order(requestingUser=request.user)
-            activeOrder.save()
-        orderLine = OrderLine(item=item,order=activeOrder)
-        orderLine.save()
+        activeOrder = Order.objects.filter(requestingUser=request.user,status="O")
+
+        if item.type == 'CM' or item.type == 'UM':
+            #if item is membership, delete any existing active order. memberships should be only lines on an order
+            if activeOrder.exists():
+                activeOrder.delete()
+            #create new order
+            newOrder = Order(requestingUser=request.user, type="R")
+            newOrder.save()
+            orderLine = OrderLine(item=item,order=newOrder,price=item.price)
+            orderLine.save()
+        else:
+            #regular items can be appended to existing orders, so long as existing order doesnt have a membership item
+            if not activeOrder.exists():
+                activeOrder = Order(requestingUser=request.user, type="S")
+                activeOrder.save()
+            elif activeOrder.get().type == "R":
+                #existing recurring order with membership exists and must be deleted
+                activeOrder.delete()
+                activeOrder = Order(requestingUser=request.user, type="S")
+                activeOrder.save()
+            else:
+                #item can be appended as orderline to existing order
+                activeOrder = activeOrder.get()
+
+            if not OrderLine.objects.filter(order=activeOrder,item=item).exists():
+                #item does not exist on order, so add it
+                orderLine = OrderLine(item=item,order=newOrder,price=item.price)
+                orderLine.save()
     return HttpResponse()
 
-def cancelOrder(request):
+def cancelOrderLine(request):
     if request.method == 'POST':
         postData = json.loads(request.body)
-        order = Order.objects.get(pk=postData['order'])
-        if order.requestingUser == request.user and order.status == "A":
-            order.status = "CA"
-            order.save()
-            return HttpResponse()
+        orderLine = OrderLine.objects.get(pk=postData['orderLine'])
+        if orderLine.order.requestingUser == request.user:
+            orderLine.delete()
+            return getOrder(request)
         else:
             return Http404("could not cancel order "+postData['order'])
 
+#discounts only apply to recurring payments, as per braintree's functionality
+#aeromember discount objects are each single use, and map to a braintree discount
 def applyDiscount(request):
-    if request.method == 'POST':
-        postData = json.loads(request.body)
-        discountCode = postData['discountCode']
-        orderLine = postData['orderLine']
-        discount = Discount.objects.get(code=discountCode)
-        orderLine = OrderLine.objects.get(pk=orderLine)
-        if discount.exists() and discount.active and discount.expiration < date.today() and orderLine.exists():
-            orderLine.discount = discount
-            orderLine.price = orderLine.price * (1-discount.rate)
-            orderLine.save()
-            return getOrder()
-        else:
-            return Http404("discount or orderline not found")
+    postData = json.loads(request.body)
+    discountCode = postData['discountCode']
+    discount = Discount.objects.get(code=discountCode)
+    orderLine = OrderLine.objects.filter(order__requestingUser=request.user,order__status="O")
+    if orderLine.exists() and discount.active and discount.expiration >= datetime.now().date():
+        gateway = braintree.BraintreeGateway(
+            braintree.Configuration(
+                braintree.Environment.Sandbox,
+                merchant_id=BRAINTREE_MERCHANT_ID,
+                public_key=BRAINTREE_PUBLIC_KEY,
+                private_key=BRAINTREE_PRIVATE_KEY
+            )
+        )
+        
+        braintreeDiscounts = gateway.discount.all()
+        for bd in braintreeDiscounts:
+            if bd.name == discount.braintreeName:
+                braintreeDiscount = bd
+                break
+        orderLine = orderLine.get()
+        orderLine.discount = discount
+        orderLine.price -= braintreeDiscount.amount
+        orderLine.save()
+        return getOrder(request)
+    else:
+        return Http404("Invalid Discount Code")
 
 
 

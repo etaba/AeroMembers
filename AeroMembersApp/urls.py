@@ -40,4 +40,5 @@ urlpatterns = [
     path('addpaymentmethod/', views.addPaymentMethod),
     path('manageplan/', views.managePlan),
     path('applydiscount/', views.applyDiscount),
+    path('cancelorderline/', views.cancelOrderLine),
 ]

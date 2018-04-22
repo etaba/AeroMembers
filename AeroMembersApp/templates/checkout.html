@@ -5,25 +5,32 @@
     Your order: 
     <br><br>
     {%verbatim%}
-  	<div class="border rounded" ng-repeat="orderLine in order">
-  		{{ orderLine.item__name }} : {{ orderLine.item__description }} : {{ orderLine.price }}
-      <div ng-show="orderLine.discount">Discount Applied</div>
-  	</div>
-    <div>
-      Total: {{ total }}
+    <div ng-show="!emptyCart">
+    	<div class="border rounded" ng-repeat="orderLine in order">
+    		{{ orderLine.item__name }} : {{ orderLine.item__description }} : {{ orderLine.price }}
+        <div ng-show="orderLine.discount__rate">Discount Applied: {{100*orderLine.discount__rate}}%</div>
+        <a href="#" ng-click="cancelLine(orderLine.pk)">Remove Line</a>
+        <hr>
+    	</div>
+      <div>
+        Total: ${{ totalPrice }}
+      </div>
     </div>
-    <div>
-      <input type="text" ng-model="discountCode" placeholder-text="Discount Code">
-      <button ng-click="applyDiscount(discountCode)">Apply</button>
+    <div ng-show="emptyCart">Cart is Empty</div>
+
+    <div ng-if="orderLine.item__type == 'CM'|orderLine.item__type=='UM'">
+      <input type="text" ng-model="discountCode" placeholder="Discount Code">
+      <button ng-click="applyDiscount(discountCode,orderLine)">Apply</button>
     </div>
   	{% endverbatim %}
-  <a href="#" ng-click="newPaymentMethod()" ng-show="!showAddPaymentMethod">New Payment Method</a>
+        <div id="braintree-dropin"></div>
+
+  <!--<a href="#" ng-click="newPaymentMethod()" ng-show="!showAddPaymentMethod">New Payment Method</a>
   <div ng-show="showAddPaymentMethod">
-    <div id="braintree-dropin"></div>
     <button ng-click="addPaymentMethod()">Add Payment Method</button>
-  </div>
+  </div>-->
 
   <br><br>
-  <button ng-click="pay()">Continue</button>
+  <button ng-click="pay()">Pay</button>
 </div>
 {%endblock%}

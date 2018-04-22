@@ -129,12 +129,11 @@ app.controller('checkoutCtrl', ['$scope','$http',function($scope,$http){
             url: "/getorder/",
             method: 'GET',
         }).then(function success(response){
-            $scope.order = response.data
+            loadOrder(response.data)
         },function error(){
             console.log("No order found sorry")
         })
 
-        /*load payment methods
         $http({
             url: "/clienttoken/",
             method: 'GET'
@@ -148,7 +147,19 @@ app.controller('checkoutCtrl', ['$scope','$http',function($scope,$http){
                 });
         },function error(){
             console.log("Client token not received.")
-        })*/
+        })
+    }
+
+    loadOrder = function(orderLines){
+        if(orderLines.length == 0){
+            $scope.emptyCart = true
+        }
+        else{
+            $scope.emptyCart = false
+            $scope.order = orderLines
+            prices = orderLines.map(o => o.price)
+            $scope.totalPrice = prices.reduce((t,o) => t+o)            
+        }
     }
 
     $scope.addPaymentMethod = function(){
@@ -169,27 +180,39 @@ app.controller('checkoutCtrl', ['$scope','$http',function($scope,$http){
     $scope.pay = function () {
         $scope.braintreeDropin.requestPaymentMethod(function (err, payload) {
             $http({
-                url: "/checkout/",
+                url: "/payment/",
                 method: 'POST',
-                data: {'paymentNonce':payload.nonce,
-                        'membership':$scope.plan}
+                data: {'paymentNonce':payload.nonce}
             }).then(function success(response){
                 console.log("Payment was successful")
+                $window.location.href = '/'
             },function error(err){
                 console.log("Error processing your payment")
             })
         })
     };
 
-    $scope.applyDiscount= function(code){
+    $scope.applyDiscount= function(code,orderLine){
         $http({
-                url: "/applyDiscount/",
+                url: "/applydiscount/",
                 method: 'POST',
                 data: {'discountCode':code}
               }).then(function success(response){
-                $scope.order = response.data
+                loadOrder(response.data)
               },function error(){
                 console.log("Error processing discount")
+              })
+    }
+
+    $scope.cancelLine = function(orderLine){
+        $http({
+                url: "/cancelorderline/",
+                method: 'POST',
+                data: {'orderLine':orderLine}
+              }).then(function success(response){
+                loadOrder(response.data)
+              },function error(){
+                console.log("Error canceling discount")
               })
     }
 

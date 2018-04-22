@@ -6,7 +6,8 @@
       "name": "Silver",
       "type": "UM",
       "description":"Silver membership for user",
-      "price": 10
+      "price": 10,
+      "braintreeName": "SILVER_USER"
     }
   },
   {
@@ -16,7 +17,8 @@
       "name": "Gold",
       "type": "UM",
       "description":"Gold membership for user",
-      "price": 10
+      "price": 10,
+      "braintreeName": "GOLD_USER"
     }
   },
   {
@@ -26,7 +28,8 @@
       "name": "Platinum",
       "type": "UM",
       "description":"Platinum membership for user",
-      "price": 10
+      "price": 10,
+      "braintreeName": "PLATINUM_USER"
     }
   },
   {
@@ -36,6 +39,7 @@
       "name": "Silver",
       "type": "CM",
       "description":"Silver membership for company",
+      "braintreeName": "SILVER_COMPANY",
       "price": 10
     }
   },
@@ -46,6 +50,7 @@
       "name": "Gold",
       "type": "CM",
       "description":"Gold membership for company",
+      "braintreeName": "GOLD_COMPANY",
       "price": 10
 
     }
@@ -57,7 +62,19 @@
       "name": "Sponsor",
       "type": "CM",
       "description":"Sponsor membership for company",
+      "braintreeName": "SPONSOR_COMPANY",
       "price": 10
+    }
+  },
+  {
+    "model": "AeroMembersApp.Discount",
+    "pk":1,
+    "fields":{
+      "code":"12345",
+      "braintreeName":"USER_SILVER_DISCOUNT",
+      "active":true,
+      "rate":0.25,
+      "expiration":"2017"
     }
   }
 
