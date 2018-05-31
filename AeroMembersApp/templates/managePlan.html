@@ -1,16 +1,16 @@
 {% extends "base.html" %}
 {%block content%}
 {%include 'header.html'%}
-<div class="container text-center" ng-controller="membershipCtrl">
+<div class="container text-center" ng-controller="subscriptionCtrl">
 	{% for plan in plans %}
 		{% if plan != membership %}
 		<div class="radio">
-		  <label><input type="radio" ng-model="membershipSelected" value="{{plan.pk}}">{{plan.name}}</label>
+		  <label><input type="radio" ng-model="plan" value="{{plan.pk}}">{{plan.name}}</label>
 		  <p>{{plan.description}}</p>
 		</div>
 		{% endif %}
 	{% endfor %}
 
-  <a href="#" ng-click="orderAndCheckout(membershipSelected)">Purchase</a>
+  <a href="#" ng-click="selectPlan(plan)" >Purchase</a>
 </div>
 {%endblock%}

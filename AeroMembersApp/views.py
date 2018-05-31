@@ -111,7 +111,7 @@ def companyRegistration(request):
             company = companyForm.save()
             cu = CompanyUser(user=request.user,company=company,is_admin=True)
             cu.save()
-            return redirect('index')
+            return redirect('managecompanyplan')
     else:
         companyForm = CompanyForm()
         return render(request, 'registration/companyregistration.html',{'companyForm':companyForm})
@@ -187,7 +187,6 @@ def completeSignup(request):
 @login_required
 def accountSettings(request):
     user = request.user
-
     try:
         linkedin_login = user.social_auth.get(provider='linkedin-oauth2')
     except UserSocialAuth.DoesNotExist:
@@ -366,6 +365,7 @@ def viewUser(request,userId):
     context['companies'] = companies
     return render(request, 'viewUser.html',context);
 
+@login_required
 def checkout(request):
     gateway = braintree.BraintreeGateway(
         braintree.Configuration(
@@ -415,51 +415,24 @@ def checkout(request):
         else:
             order = orderQ.get()
 
-        #process order
-        if order.type == "R":
-            #membership/recurring payment order
-            subscription = {
-                "payment_method_token": customer.payment_methods[0].token,
-                "plan_id": order.orderLines[0].item.braintreeName,
-            }
-            discount = order.orderLines[0].discount
-            if discount != None:
-                subscription['discounts'] = {'add':{'inherited_from_id':discount.braintreeName}}
-
-            #TODO: deal with preexisting or coexisting memberships
-
-            result = gateway.subscription.create(subscription)
-            if result.is_success:
-                #TODO: attach transaction id?
-                membership = Membership(user=request.user,level=membership)
-                membership.save()
-
-            else:
-                for error in result.errors.deep_errors:
-                    print(error.attribute)
-                    print(error.code)
-                    print(error.message)
-                raise Http404(result.errors.deep_errors)
-
-        elif order.type == "S":
-            #regular resource items
-            total = sum([o.price for o in order.orderLines])
-            result = gateway.transaction.sale({  
-                "amount": str(total),
-                "payment_method_nonce": paymentNonce,
-                "options": {
-                  "submit_for_settlement": True
-                }})
-            if result.is_success:
-                #TODO: attach transaction id?
-                #TODO: process purchase here: start download, associate item with user, etc
-                pass
-            else:
-                for error in result.errors.deep_errors:
-                    print(error.attribute)
-                    print(error.code)
-                    print(error.message)
-                raise Http404(result.errors.deep_errors)
+        #regular resource items
+        total = sum([o.price for o in order.orderLines])
+        result = gateway.transaction.sale({  
+            "amount": str(total),
+            "payment_method_nonce": paymentNonce,
+            "options": {
+              "submit_for_settlement": True
+            }})
+        if result.is_success:
+            #TODO: attach transaction id?
+            #TODO: process purchase here: start download, associate item with user, etc
+            pass
+        else:
+            for error in result.errors.deep_errors:
+                print(error.attribute)
+                print(error.code)
+                print(error.message)
+            raise Http404(result.errors.deep_errors)
         #TODO: return transaction id or redirect to confirmation page
         return HttpResponse("Payment success")
 
@@ -541,11 +514,20 @@ def addPaymentMethod(request):
         pass
     return HttpResponse(json.dumps(paymentMethods))'''
 
+@login_required
 def getOrder(request):
     #get open order
     orderLines = OrderLine.objects.filter(order__requestingUser=request.user,order__status="O")
     if orderLines.exists():
         response = list(orderLines.values('pk','item__name','item__type','item__description','price','discount__rate'))
+    else:
+        response = []
+    return HttpResponse(json.dumps(response))
+
+def getInactiveSubscription(request):
+    sub = Subscription.objects.filter(user=request.user,status="inactive")
+    if sub.exists():
+        response = list(sub.values('pk','plan__name','plan__description','plan__monthlyRate','discount__rate'))
     else:
         response = []
     return HttpResponse(json.dumps(response))
@@ -566,10 +548,95 @@ def clientToken(request):
         token = gateway.client_token.generate()
     return HttpResponse(token)
 
+@login_required
 def managePlan(request):
     if request.method == 'GET':
-        plans = Item.objects.filter(type="UM")
+        plans = Plan.objects.filter(type='USER')
         return render(request,'manageplan.html',{"plans":plans})
+
+@login_required
+def manageCompanyPlan(request):
+    if request.method == 'GET':
+        plans = Plan.objects.filter(type='COMPANY')
+        return render(request,'manageplan.html',{"plans":plans})
+
+@login_required
+def createSubscription(request):
+    if request.method == 'POST':
+        postData = json.loads(request.body)
+        plan = Plan.objects.get(pk=postData['plan'])
+        activeSub = Subscription.objects.filter(user=request.user,status="O")
+
+        #if item is membership, delete any existing active order. memberships should be only lines on an order
+        if activeSub.exists():
+            #TODO: handle multiple subscriptions here
+            activeSub.delete()
+        #create new order
+        newSub = Subscription(user=request.user, plan=plan)
+        newSub.save()
+        
+    return HttpResponse()
+
+@login_required
+def subscriptionCheckout(request):
+    gateway = braintree.BraintreeGateway(
+        braintree.Configuration(
+            braintree.Environment.Sandbox,
+            merchant_id=BRAINTREE_MERCHANT_ID,
+            public_key=BRAINTREE_PUBLIC_KEY,
+            private_key=BRAINTREE_PRIVATE_KEY
+        )
+    )
+    if request.method == "GET":
+        sub = Subscription.objects.get(user=request.user,status="inactive")
+        return render(request, 'subscribe.html')
+    elif request.method == "POST":
+        postData = json.loads(request.body)
+        paymentNonce = postData.get('paymentNonce',None)
+        if paymentNonce == None:
+            raise Http404("Braintree payment nonce not received")
+        #check if braintree customer already exists
+        try:
+            customer = gateway.customer.find(str(request.user.pk))
+        except braintree.exceptions.not_found_error.NotFoundError:
+            phone = request.user.contact.phone if hasattr(request.user,'contact') else ""
+            #create braintree customer
+            customer = gateway.customer.create({
+                "first_name": request.user.first_name,
+                "last_name": request.user.last_name,
+                "email": request.user.email,
+                "phone": phone,
+                "id": str(request.user.pk),
+                "payment_method_nonce": paymentNonce,
+            })
+            if not customer.is_success:
+                raise Http404(customer.error)
+
+        #membership/recurring payment order
+        subscription = {
+            "payment_method_token": customer.payment_methods[0].token,
+            "plan_id": order.orderLines[0].item.braintreeName,
+        }
+        discount = order.orderLines[0].discount
+        if discount != None:
+            subscription['discounts'] = {'add':{'inherited_from_id':discount.braintreeName}}
+
+        #TODO: deal with preexisting or coexisting memberships
+
+        result = gateway.subscription.create(subscription)
+        if result.is_success:
+            #TODO: attach transaction id?
+            a = 1
+
+        else:
+            for error in result.errors.deep_errors:
+                print(error.attribute)
+                print(error.code)
+                print(error.message)
+            raise Http404(result.errors.deep_errors)
+
+        #TODO: return transaction id or redirect to confirmation page
+        return HttpResponse("Payment success")
 
 def addOrderLine(request):
     if request.method == 'POST':

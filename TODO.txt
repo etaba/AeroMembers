@@ -4,7 +4,6 @@ AUTHENTICATION:
 	-update oauth settings for facebook,linkedin,google with production url, production email, logo, etc
 	-remove secret keys from settings.py
 	-email invite?
-    -change password
     -accountSettings.html: figure out how to get social account's email or profile name at least
 
 
@@ -13,7 +12,6 @@ USER:
 
 COMPANY
 	-invite others from same company to join company account (invitee may or may not already have account)
-    -company registration
 
 FORUM
     -collapse parent posts

@@ -53,7 +53,28 @@ app.controller('forumCtrl', ['$scope', '$http', '$sce', '$cookies', '$document',
 
 }]);
 
-app.controller('membershipCtrl', ['$scope','$http','$window',function($scope,$http,$window){
+app.controller('companyCtrl', ['$scope', '$http', '$sce', '$cookies', '$document', '$window', function($scope, $http, $sce, $cookies, $document, $window) {
+    init = function(){
+        $scope.newCompany = false;
+    }
+
+    init()
+}]);
+
+app.controller('subscriptionCtrl', ['$scope','$http','$window',function($scope,$http,$window){
+
+    $scope.selectPlan = function(plan){
+        $http({
+            url: "/createsubscription/",
+            method: 'POST',
+            data: {'plan':plan}
+        }).then(function success(response){
+            $window.location.href = '/subscriptioncheckout/'
+        },function error(){
+            console.log("Error processing subscription request.")
+        })
+    }
+
     $scope.orderAndCheckout = function(item){
         $http({
             url: "/addorderline/",
@@ -62,9 +83,90 @@ app.controller('membershipCtrl', ['$scope','$http','$window',function($scope,$ht
         }).then(function success(response){
             $window.location.href = '/checkout/'
         },function error(){
-            console.log("Client token not received.")
+            console.log("Error adding order line.")
         })
     };
+}]);
+
+app.controller('subscriptionCheckoutCtrl', ['$scope','$http','$window',function($scope,$http,$window){
+    init = function(){
+        //load active order
+        $http({
+            url: "/getinactivesubscription/",
+            method: 'GET',
+        }).then(function success(response){
+            $scope.subscription = response.data[0]
+            if ($scope.subscription['discount__rate'] != undefined){
+                $scope.totalPrice = $scope.subscription['plan__monthlyRate']*$scope.subscription['discount__rate']                
+            }
+            else{
+                $scope.totalPrice = $scope.subscription['plan__monthlyRate']
+            }
+        },function error(){
+            console.log("No order found sorry")
+        })
+
+
+        $http({
+            url: "/clienttoken/",
+            method: 'GET'
+        }).then(function success(response){
+            $scope.showAddPaymentMethod = true
+            braintree.dropin.create({
+                  authorization: response.data,
+                  container: '#braintree-dropin'
+                }, function (createErr, instance) {
+                    $scope.braintreeDropin = instance
+                });
+        },function error(){
+            console.log("Client token not received.")
+        })
+    }
+
+    $scope.addPaymentMethod = function(){
+        $scope.braintreeDropin.requestPaymentMethod(function (err, payload) {
+              $http({
+                url: "/addpaymentmethod/",
+                method: 'POST',
+                data: {'paymentNonce':payload.nonce}
+              }).then(function success(response){
+                $scope.paymentMethods['creditCard'].push(response.data['creditCard'])
+                $scope.paymentMethods.paypal.push(response.data.paypal)
+              },function error(){
+                console.log("Error processing adding payment method")
+              })
+            });
+    };
+
+    $scope.pay = function () {
+        $scope.braintreeDropin.requestPaymentMethod(function (err, payload) {
+            $http({
+                url: "/payment/",
+                method: 'POST',
+                data: {'paymentNonce':payload.nonce}
+            }).then(function success(response){
+                console.log("Payment was successful")
+                $window.location.href = '/'
+            },function error(err){
+                console.log("Error processing your payment")
+            })
+        })
+    };
+
+    $scope.applyDiscount= function(code,orderLine){
+        $http({
+                url: "/applydiscount/",
+                method: 'POST',
+                data: {'discountCode':code}
+              }).then(function success(response){
+                loadOrder(response.data)
+              },function error(){
+                console.log("Error processing discount")
+              })
+    }
+
+    init();
+    
 }]);
 
 

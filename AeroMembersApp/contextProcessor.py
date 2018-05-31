@@ -4,8 +4,8 @@ def company(request):
     if request.user.is_anonymous:
         return context
     else:
-        if hasattr(request.user,'membership'):
-            context['membership'] = request.user.membership.level
+        if hasattr(request.user,'subscription'):
+            context['plan'] = request.user.subscription.plan.name
         companies = CompanyUser.objects.filter(user=request.user)
         context['companies']=companies
         if request.session.get('currCompanyId',None) != None:

@@ -115,19 +115,6 @@ class Company(models.Model):
     def __str__(self):
         return self.name
 
-class Membership(models.Model):
-    PLANS = [
-        ("SILVER_USER","Silver"),
-        ("GOLD_USER","Gold"),
-        ("PLATINUM_USER","Platinum"),
-        ("SILVER_COMPANY","Silver"),
-        ("GOLD_COMPANY","Gold"),
-        ("SPONSOR_COMPANY","Sponsor"),
-    ]
-    plan = models.CharField(max_length=200, choices=PLANS)
-    company = models.OneToOneField('Company',on_delete=models.CASCADE,related_name='membership',unique=True, null=True)
-    user = models.OneToOneField(User,on_delete=models.CASCADE,related_name='membership', unique=True, null=True)
-
 '''
 class NAICS(models.Model):
     company = models.ForeignKey('Company', on_delete=models.CASCADE)
@@ -198,10 +185,6 @@ class Tag(models.Model):
         return self.name
 
 class Order(models.Model):
-    TYPES = [
-        ("R","Recurring"),
-        ("S","Single")
-    ]
     STATUS = [
         ("O","Open"),
         ("C","Closed"),
@@ -209,38 +192,39 @@ class Order(models.Model):
         ("IP","In Progress")
     ]
     status = models.CharField(max_length=200,choices=STATUS,default="O")
-    type = models.CharField(max_length=200,choices=TYPES)
     date = models.DateTimeField(default=timezone.now)
     requestingUser = models.ForeignKey(User,related_name='order',on_delete=models.CASCADE)
     requestingCompany = models.ForeignKey('Company',related_name='order',on_delete=models.CASCADE,null=True)
-    transactionID = models.CharField(max_length=10,null=True)
+    braintreeID = models.CharField(max_length=10,null=True)
 
 class OrderLine(models.Model):
     order = models.ForeignKey('Order',related_name='orderLines',on_delete=models.CASCADE)
     quantity = models.IntegerField(default=1)
     price = models.FloatField(default=0)
     item = models.ForeignKey('Item',on_delete=models.CASCADE)
-    discount = models.OneToOneField('Discount',related_name='discount',on_delete=models.DO_NOTHING,null=True )
 
 class Item(models.Model):
-    TYPES = [
-        ("UM","User Membership"),
-        ("CM","Company Membership"),
-        ("R","Resource")
-    ]
-    braintreeName = models.CharField(max_length=200)
-    type = models.CharField(max_length=200,choices=TYPES)
+    name = models.CharField(max_length=255,unique=True)
     description = models.TextField(max_length=1000)
     price = models.FloatField()
-    class Meta:
-        unique_together = ("type","name")
+
+class Subscription(models.Model):
+    company = models.OneToOneField('Company',on_delete=models.CASCADE,related_name='membership',unique=True, null=True)
+    user = models.OneToOneField(User,on_delete=models.CASCADE,related_name='membership', unique=True, null=True)
+    plan = models.ForeignKey('Plan',on_delete=models.CASCADE)
+    #statuses: active, pending, etc
+    status = models.CharField(max_length=64,default="inactive")
+    braintreeID = models.CharField(max_length=32,null=True)
+    discount = models.OneToOneField('Discount',related_name='discount',on_delete=models.DO_NOTHING,null=True )
+
+class Plan(models.Model):
+    name = models.CharField(max_length=200)
+    type = models.CharField(max_length=24)
+    monthlyRate = models.FloatField()
+    description = models.TextField()
+    braintreeName = models.CharField(max_length=200)
 
 class Discount(models.Model):
-    TYPES = [
-        ("UM","User Membership"),
-        ("CM","Company Membership"),
-        ("R","Resource")
-    ]
     code = models.CharField(max_length=200,unique=True)
     braintreeName = models.CharField(max_length=200)
     active = models.BooleanField()

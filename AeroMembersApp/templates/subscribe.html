@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{%block content%}
+{%include 'header.html'%}
+<div class="container text-center" ng-controller="subscriptionCheckoutCtrl">
+    Your order: 
+    <br><br>
+    {%verbatim%}
+      <div class="border rounded" >
+        {{ subscription.plan__name }} : {{ subscription.plan__description }} : {{ subscription.plan__monthlyRate }}
+        <div ng-show="orderLine.discount__rate">Discount Applied: {{100*subscription.discount__rate}}%</div>
+        <hr>
+      </div>
+      <div>
+        Monthly Rate: ${{ totalPrice }}
+      </div>
+
+      <input type="text" ng-model="discountCode" placeholder="Discount Code">
+      <button ng-click="applyDiscount(discountCode,orderLine)">Apply</button>
+    {% endverbatim %}
+        <div id="braintree-dropin"></div>
+
+  <!--<a href="#" ng-click="newPaymentMethod()" ng-show="!showAddPaymentMethod">New Payment Method</a>
+  <div ng-show="showAddPaymentMethod">
+    <button ng-click="addPaymentMethod()">Add Payment Method</button>
+  </div>-->
+
+  <br><br>
+  <button ng-click="pay()">Pay</button>
+</div>
+{%endblock%}

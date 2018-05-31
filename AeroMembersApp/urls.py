@@ -19,7 +19,7 @@ urlpatterns = [
     path('signin/', views.signin,name='signin'),
     path('oauth/', include('social_django.urls', namespace='social')),
     path('accountsettings/', views.accountSettings),
-    path('accountsettings/password/', views.password),
+    path('accountsettings/password/', views.password, name='password'),
     path('signout/', views.signout),
     path('termsofservice/', views.termsOfService),
     path('privacy/', views.privacy),
@@ -39,6 +39,10 @@ urlpatterns = [
     path('getorder/', views.getOrder),
     path('addpaymentmethod/', views.addPaymentMethod),
     path('manageplan/', views.managePlan),
+    path('managecompanyplan/',views.manageCompanyPlan, name='managecompanyplan'),
     path('applydiscount/', views.applyDiscount),
     path('cancelorderline/', views.cancelOrderLine),
+    path('createsubscription/',views.createSubscription),
+    path('subscriptioncheckout/',views.subscriptionCheckout),
+    path('getinactivesubscription/',views.getInactiveSubscription)
 ]
