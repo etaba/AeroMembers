@@ -20,19 +20,12 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # See https://docs.djangoproject.com/en/1.10/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.environ.get('AEROMEMBERS_SECRET_KEY');
+SECRET_KEY = 'coh6l+-bwqssb5cb%gdtl#lby9m!%wqvv9fusd3ynt3g1=-&_#'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
-ALLOWED_HOSTS = ['www.aeromembers.com',
-                 'aeromembers.com',
-                 'www.aeromembers.org',
-                 'aeromembers.org',
-                 'www.aeromembers.net',
-                 'aeromembers.net',
-                 'www.aeromembers.info',
-                 'aeromembers.info']
+ALLOWED_HOSTS = []
 
 
 # Application definition
@@ -173,9 +166,5 @@ USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.10/howto/static-files/
-STATIC_ROOT = os.path.dirname(BASE_DIR) + '/public/static/'
+STATIC_ROOT = os.path.dirname(BASE_DIR) + '/AeroMembers/AeroMembersApp/static/'
 STATIC_URL = '/static/'
-
-# Override production variables if DJANGO_DEVELOPMENT env variable is set
-if os.environ.get('DJANGO_DEVELOPMENT') is not None:
-    from settings_dev import *

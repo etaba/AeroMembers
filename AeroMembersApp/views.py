@@ -7,9 +7,7 @@ from django.contrib import messages
 from AeroMembersApp.forms import *
 from social_django.models import UserSocialAuth
 from django.core.serializers.json import DjangoJSONEncoder
-from django.core import serializers
 from pprint import pprint
-from django.core.exceptions import ObjectDoesNotExist
 import json, braintree
 from datetime import datetime
 
@@ -112,6 +110,8 @@ def companyRegistration(request):
             cu = CompanyUser(user=request.user,company=company,is_admin=True)
             cu.save()
             return redirect('managecompanyplan')
+        else:
+            return render(request, 'registration/companyregistration.html',{'companyForm':companyForm})
     else:
         companyForm = CompanyForm()
         return render(request, 'registration/companyregistration.html',{'companyForm':companyForm})
@@ -552,7 +552,9 @@ def clientToken(request):
 def managePlan(request):
     if request.method == 'GET':
         plans = Plan.objects.filter(type='USER')
-        return render(request,'manageplan.html',{"plans":plans})
+        #retrieve active user subscriptions
+        activeSub = Subscription.objects.filter(user=request.user,status="O",plan__type="USER")
+        return render(request,'manageplan.html',{"plans":plans,"activePlan":activeSub.plan})
 
 @login_required
 def manageCompanyPlan(request):
@@ -565,16 +567,9 @@ def createSubscription(request):
     if request.method == 'POST':
         postData = json.loads(request.body)
         plan = Plan.objects.get(pk=postData['plan'])
-        activeSub = Subscription.objects.filter(user=request.user,status="O")
-
-        #if item is membership, delete any existing active order. memberships should be only lines on an order
-        if activeSub.exists():
-            #TODO: handle multiple subscriptions here
-            activeSub.delete()
         #create new order
         newSub = Subscription(user=request.user, plan=plan)
-        newSub.save()
-        
+        request.session['pendingSubscription'] = newSub
     return HttpResponse()
 
 @login_required
@@ -588,7 +583,8 @@ def subscriptionCheckout(request):
         )
     )
     if request.method == "GET":
-        sub = Subscription.objects.get(user=request.user,status="inactive")
+        #sub = Subscription.objects.get(user=request.user,status="inactive")
+        sub = request.session['pendingSubscription']
         return render(request, 'subscribe.html')
     elif request.method == "POST":
         postData = json.loads(request.body)
@@ -625,9 +621,13 @@ def subscriptionCheckout(request):
 
         result = gateway.subscription.create(subscription)
         if result.is_success:
-            #TODO: attach transaction id?
-            a = 1
-
+            activeSub = Subscription.objects.filter(user=request.user,status="O",plan__type="USER")
+            #if item is membership, delete any existing active order. memberships should be only lines on an order
+            if activeSub.exists():
+                activeSub.delete()
+            newSub = request.session['pendingSubscription']
+            newSub.save()
+            #TODO: log transaction detials? send order confirmation?
         else:
             for error in result.errors.deep_errors:
                 print(error.attribute)
