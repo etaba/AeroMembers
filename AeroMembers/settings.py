@@ -89,10 +89,10 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'aeromembersdb',
-        'USER': 'root',
-        #'PASSWORD': 
-        'HOST': 'localhost',
-        'PORT': '3306'
+        'USER': 'eptaba',
+        'PASSWORD': os.environ.get('AEROMEMBERS_SECRET_KEY'),
+        'HOST': 'eptaba.aeromembers.com',
+        #'PORT': '3306'
     }
 }
 
