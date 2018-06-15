@@ -93,7 +93,10 @@ DATABASES = {
         'USER': 'eptaba',
         'PASSWORD': os.environ.get('AEROMEMBERS_SECRET_KEY'),
         'HOST': 'eptaba.aeromembers.com',
-        #'PORT': '3306'
+        'PORT': '3306',
+        'OPTIONS': {
+           "init_command": "SET storage_engine=INNODB",
+        }
     }
 }
 
