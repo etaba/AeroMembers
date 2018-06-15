@@ -88,15 +88,13 @@ WSGI_APPLICATION = 'AeroMembers.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.mysql',
+        #'ENGINE': 'django.db.backends.mysql',
+        'ENGINE': 'mysql.connector.django',
         'NAME': 'aeromembersdb',
         'USER': 'eptaba',
         'PASSWORD': os.environ.get('AEROMEMBERS_SECRET_KEY'),
         'HOST': 'eptaba.aeromembers.com',
-        'PORT': '3306',
-        'OPTIONS': {
-           "init_command": "SET storage_engine=INNODB",
-        }
+        'PORT': '3306'
     }
 }
 
