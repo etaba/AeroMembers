@@ -92,7 +92,7 @@ DATABASES = {
         'ENGINE': 'mysql.connector.django',
         'NAME': 'aeromembersdb',
         'USER': 'eptaba',
-        'PASSWORD': os.environ.get('AEROMEMBERS_SECRET_KEY'),
+        'PASSWORD': os.environ.get('AEROMEMBERS_DB_PASS'),
         'HOST': 'eptaba.aeromembers.com',
         'PORT': '3306'
     }
