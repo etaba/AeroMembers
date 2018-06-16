@@ -88,8 +88,7 @@ WSGI_APPLICATION = 'AeroMembers.wsgi.application'
 
 DATABASES = {
     'default': {
-        #'ENGINE': 'django.db.backends.mysql',
-        'ENGINE': 'mysql.connector.django',
+        'ENGINE': 'django.db.backends.mysql',
         'NAME': 'aeromembersdb',
         'USER': 'eptaba',
         'PASSWORD': os.environ.get('AEROMEMBERS_DB_PASS'),
