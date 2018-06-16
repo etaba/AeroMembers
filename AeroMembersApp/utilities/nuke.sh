@@ -2,7 +2,7 @@
 
 mv ../migrations/loadItems.py .
 rm ../migrations/0*
-if [ $PRODUCTION != true ]
+if [ $PRODUCTION != "true" ]
 then
 	mysql -u plumber -pplumberpass -e 'drop database aeromembersdb'
 	mysql -u plumber -pplumberpass -e 'create database aeromembersdb'
