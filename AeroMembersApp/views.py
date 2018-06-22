@@ -703,7 +703,7 @@ def applyDiscount(request):
 
 
 def googleThing(request):
-    return render("google25f6029237164a78.html")
+    return render(request,"google25f6029237164a78.html")
 
 
 @login_required
