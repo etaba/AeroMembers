@@ -1,30 +1,48 @@
 {% extends "base.html" %}
 {%block content%}
 {%include 'header.html'%}
+
 <div class="container text-center" ng-controller="subscriptionCheckoutCtrl">
-    Your order: 
+
+  <div ng-show="!selected">
+    {% for plan in plans %}
+      {% if plan != membership %}
+      <div class="radio">
+        <label><input type="radio" ng-model="plan" value="{{plan.pk}}">{{plan.name}}</label>
+        <p>{{plan.description}}</p>
+      </div>
+      {% endif %}
+    {% endfor %}
+
+    <a href="#" ng-click="selectPlan(plan)" >Purchase</a>
+  </div>
+
+  <div ng-show="selected">
+      Your order: 
+      <br><br>
+      {%verbatim%}
+        <div class="border rounded" >
+          {{ selectedPlan.name }} : {{ selectedPlan.description }} : {{ selectedPlan.monthlyRate }}
+          <div ng-show="discount > 0">Discount Applied: {{100*discount}}%</div>
+          <hr>
+        </div>
+        <div>
+          Monthly Rate: ${{ selectedPlan.monthlyRate - (selectedPlan.monthlyRate * discount) }}
+        </div>
+
+        <input type="text" ng-model="discountCode" placeholder="Discount Code">
+        <button ng-click="applyDiscount(discountCode)">Apply</button>
+      {% endverbatim %}
+          <div id="braintree-dropin"></div>
+
+    <!--<a href="#" ng-click="newPaymentMethod()" ng-show="!showAddPaymentMethod">New Payment Method</a>
+    <div ng-show="showAddPaymentMethod">
+      <button ng-click="addPaymentMethod()">Add Payment Method</button>
+    </div>-->
+
     <br><br>
-    {%verbatim%}
-      <div class="border rounded" >
-        {{ subscription.plan__name }} : {{ subscription.plan__description }} : {{ subscription.plan__monthlyRate }}
-        <div ng-show="orderLine.discount__rate">Discount Applied: {{100*subscription.discount__rate}}%</div>
-        <hr>
-      </div>
-      <div>
-        Monthly Rate: ${{ totalPrice }}
-      </div>
-
-      <input type="text" ng-model="discountCode" placeholder="Discount Code">
-      <button ng-click="applyDiscount(discountCode,orderLine)">Apply</button>
-    {% endverbatim %}
-        <div id="braintree-dropin"></div>
-
-  <!--<a href="#" ng-click="newPaymentMethod()" ng-show="!showAddPaymentMethod">New Payment Method</a>
-  <div ng-show="showAddPaymentMethod">
-    <button ng-click="addPaymentMethod()">Add Payment Method</button>
-  </div>-->
-
-  <br><br>
-  <button ng-click="pay()">Pay</button>
+    <button ng-click="pay()">Pay</button>
+  </div>
 </div>
+
 {%endblock%}

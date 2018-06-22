@@ -1,9 +1,10 @@
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.contrib.auth import login, authenticate, update_session_auth_hash, logout
 from django.shortcuts import render, redirect, reverse, Http404
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import AdminPasswordChangeForm
 from django.contrib import messages
+from django.forms.models import model_to_dict
 from AeroMembersApp.forms import *
 from social_django.models import UserSocialAuth
 from django.core.serializers.json import DjangoJSONEncoder
@@ -273,8 +274,9 @@ def comments(request,threadId):
             'threadId':threadId,
             'user':request.user.username
             }
-    data = json.dumps(data, cls=DjangoJSONEncoder)
-    return HttpResponse(data, content_type='application/json')
+    #data = json.dumps(data, cls=DjangoJSONEncoder)
+    #return HttpResponse(data, content_type='application/json')
+    return JsonResponse(data)
 
 def commentTemplate(request):
     return render(request,'commentTemplate.html')
@@ -524,13 +526,13 @@ def getOrder(request):
         response = []
     return HttpResponse(json.dumps(response))
 
-def getInactiveSubscription(request):
-    sub = Subscription.objects.filter(user=request.user,status="inactive")
-    if sub.exists():
-        response = list(sub.values('pk','plan__name','plan__description','plan__monthlyRate','discount__rate'))
-    else:
-        response = []
-    return HttpResponse(json.dumps(response))
+# def getInactiveSubscription(request):
+#     sub = Subscription.objects.filter(user=request.user,status="inactive")
+#     if sub.exists():
+#         response = list(sub.values('pk','plan__name','plan__description','plan__monthlyRate','discount__rate'))
+#     else:
+#         response = []
+#     return HttpResponse(json.dumps(response))
 
 def clientToken(request):
     gateway = braintree.BraintreeGateway(
@@ -549,12 +551,15 @@ def clientToken(request):
     return HttpResponse(token)
 
 @login_required
-def managePlan(request):
+def subscribe(request):
     if request.method == 'GET':
         plans = Plan.objects.filter(type='USER')
+        context = {"plans":plans}
         #retrieve active user subscriptions
         activeSub = Subscription.objects.filter(user=request.user,status="O",plan__type="USER")
-        return render(request,'manageplan.html',{"plans":plans,"activePlan":activeSub.plan})
+        if activeSub.exists():
+            context["activePlan"] = activeSub.plan
+        return render(request,'subscribe.html',context)
 
 @login_required
 def manageCompanyPlan(request):
@@ -563,14 +568,18 @@ def manageCompanyPlan(request):
         return render(request,'manageplan.html',{"plans":plans})
 
 @login_required
-def createSubscription(request):
+def selectPlan(request):
     if request.method == 'POST':
         postData = json.loads(request.body)
-        plan = Plan.objects.get(pk=postData['plan'])
-        #create new order
-        newSub = Subscription(user=request.user, plan=plan)
-        request.session['pendingSubscription'] = newSub
+        request.session['selectedPlan'] = postData['plan']
     return HttpResponse()
+
+@login_required
+def getPlan(request,planId):
+    plan = Plan.objects.get(pk=planId)
+    #response = list(plan.values('pk','name','description','monthlyRate'))
+    #data = json.dumps(plan, cls=DjangoJSONEncoder)
+    return JsonResponse(model_to_dict(plan))
 
 @login_required
 def subscriptionCheckout(request):
@@ -580,63 +589,60 @@ def subscriptionCheckout(request):
             merchant_id=BRAINTREE_MERCHANT_ID,
             public_key=BRAINTREE_PUBLIC_KEY,
             private_key=BRAINTREE_PRIVATE_KEY
-        )
-    )
-    if request.method == "GET":
-        #sub = Subscription.objects.get(user=request.user,status="inactive")
-        sub = request.session['pendingSubscription']
-        return render(request, 'subscribe.html')
-    elif request.method == "POST":
-        postData = json.loads(request.body)
-        paymentNonce = postData.get('paymentNonce',None)
-        if paymentNonce == None:
-            raise Http404("Braintree payment nonce not received")
-        #check if braintree customer already exists
-        try:
-            customer = gateway.customer.find(str(request.user.pk))
-        except braintree.exceptions.not_found_error.NotFoundError:
-            phone = request.user.contact.phone if hasattr(request.user,'contact') else ""
-            #create braintree customer
-            customer = gateway.customer.create({
-                "first_name": request.user.first_name,
-                "last_name": request.user.last_name,
-                "email": request.user.email,
-                "phone": phone,
-                "id": str(request.user.pk),
-                "payment_method_nonce": paymentNonce,
-            })
-            if not customer.is_success:
-                raise Http404(customer.error)
+        ))
+    postData = json.loads(request.body)
+    paymentNonce = postData.get('paymentNonce',None)
+    plan = Plan.objects.get(pk=postData['planId'])
+    import pdb; pdb.set_trace()
+    if paymentNonce == None:
+        raise Http404("Braintree payment nonce not received")
+    #check if braintree customer already exists
+    try:
+        customer = gateway.customer.find(str(request.user.pk))
+    except braintree.exceptions.not_found_error.NotFoundError:
+        phone = request.user.contact.phone if hasattr(request.user,'contact') else ""
+        #create braintree customer
+        customer = gateway.customer.create({
+            "first_name": request.user.first_name,
+            "last_name": request.user.last_name,
+            "email": request.user.email,
+            "phone": phone,
+            "id": str(request.user.pk),
+            "payment_method_nonce": paymentNonce,
+        })
+        if not customer.is_success:
+            raise Http404(customer.error)
 
-        #membership/recurring payment order
-        subscription = {
-            "payment_method_token": customer.payment_methods[0].token,
-            "plan_id": order.orderLines[0].item.braintreeName,
-        }
-        discount = order.orderLines[0].discount
+    #membership/recurring payment order
+    subscription = {
+        "payment_method_token": customer.payment_methods[0].token,
+        "plan_id": plan.braintreeName,
+    }
+    if 'discountCode' in postData.keys():
+        discount = Discount.objects.get(code=postData['discountCode'])
         if discount != None:
             subscription['discounts'] = {'add':{'inherited_from_id':discount.braintreeName}}
 
-        #TODO: deal with preexisting or coexisting memberships
+    #TODO: deal with preexisting or coexisting memberships
 
-        result = gateway.subscription.create(subscription)
-        if result.is_success:
-            activeSub = Subscription.objects.filter(user=request.user,status="O",plan__type="USER")
-            #if item is membership, delete any existing active order. memberships should be only lines on an order
-            if activeSub.exists():
-                activeSub.delete()
-            newSub = request.session['pendingSubscription']
-            newSub.save()
-            #TODO: log transaction detials? send order confirmation?
-        else:
-            for error in result.errors.deep_errors:
-                print(error.attribute)
-                print(error.code)
-                print(error.message)
-            raise Http404(result.errors.deep_errors)
+    result = gateway.subscription.create(subscription)
+    if result.is_success:
+        activeSub = Subscription.objects.filter(user=request.user,status="O",plan__type="USER")
+        #if item is membership, delete any existing active order. memberships should be only lines on an order
+        if activeSub.exists():
+            activeSub.delete()
+        newSub = Subscription(user=request.user, plan=plan)
+        newSub.save()
+        #TODO: log transaction detials? send order confirmation?
+    else:
+        for error in result.errors.deep_errors:
+            print(error.attribute)
+            print(error.code)
+            print(error.message)
+        raise Http404(result.errors.deep_errors)
 
-        #TODO: return transaction id or redirect to confirmation page
-        return HttpResponse("Payment success")
+    #TODO: return transaction id or redirect to confirmation page
+    return HttpResponse("Payment success")
 
 def addOrderLine(request):
     if request.method == 'POST':
@@ -689,31 +695,15 @@ def applyDiscount(request):
     postData = json.loads(request.body)
     discountCode = postData['discountCode']
     discount = Discount.objects.get(code=discountCode)
-    orderLine = OrderLine.objects.filter(order__requestingUser=request.user,order__status="O")
-    if orderLine.exists() and discount.active and discount.expiration >= datetime.now().date():
-        gateway = braintree.BraintreeGateway(
-            braintree.Configuration(
-                braintree.Environment.Sandbox,
-                merchant_id=BRAINTREE_MERCHANT_ID,
-                public_key=BRAINTREE_PUBLIC_KEY,
-                private_key=BRAINTREE_PRIVATE_KEY
-            )
-        )
-        
-        braintreeDiscounts = gateway.discount.all()
-        for bd in braintreeDiscounts:
-            if bd.name == discount.braintreeName:
-                braintreeDiscount = bd
-                break
-        orderLine = orderLine.get()
-        orderLine.discount = discount
-        orderLine.price -= braintreeDiscount.amount
-        orderLine.save()
-        return getOrder(request)
+    import pdb; pdb.set_trace()
+    if discount.active and discount.expiration >= datetime.now().date():
+        return HttpResponse(discount.rate)
     else:
         return Http404("Invalid Discount Code")
 
 
+def googleThing(request):
+    return render("google25f6029237164a78.html")
 
 
 @login_required

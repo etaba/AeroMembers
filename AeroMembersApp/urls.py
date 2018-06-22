@@ -38,11 +38,14 @@ urlpatterns = [
     path('addorderline/', views.addOrderLine),
     path('getorder/', views.getOrder),
     path('addpaymentmethod/', views.addPaymentMethod),
-    path('manageplan/', views.managePlan),
+ #   path('manageplan/', views.managePlan),
     path('managecompanyplan/',views.manageCompanyPlan, name='managecompanyplan'),
     path('applydiscount/', views.applyDiscount),
     path('cancelorderline/', views.cancelOrderLine),
-    path('createsubscription/',views.createSubscription),
+    path('selectPlan/',views.selectPlan),
+    path('subscribe/',views.subscribe),
     path('subscriptioncheckout/',views.subscriptionCheckout),
-    path('getinactivesubscription/',views.getInactiveSubscription)
+    #path('getinactivesubscription/',views.getInactiveSubscription),
+    path('getplan/<int:planId>',views.getPlan),
+    path('google25f6029237164a78.html',views.googleThing)
 ]

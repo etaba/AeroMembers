@@ -90,21 +90,23 @@ app.controller('subscriptionCtrl', ['$scope','$http','$window',function($scope,$
 
 app.controller('subscriptionCheckoutCtrl', ['$scope','$http','$window',function($scope,$http,$window){
     init = function(){
-        //load active order
-        $http({
-            url: "/getinactivesubscription/",
-            method: 'GET',
-        }).then(function success(response){
-            $scope.subscription = response.data[0]
-            if ($scope.subscription['discount__rate'] != undefined){
-                $scope.totalPrice = $scope.subscription['plan__monthlyRate']*$scope.subscription['discount__rate']                
-            }
-            else{
-                $scope.totalPrice = $scope.subscription['plan__monthlyRate']
-            }
-        },function error(){
-            console.log("No order found sorry")
-        })
+        //load selected plan
+        // $http({
+        //     url: "/getinactivesubscription/",
+        //     method: 'GET',
+        // }).then(function success(response){
+        //     $scope.subscription = response.data[0]
+        //     if ($scope.subscription['discount__rate'] != undefined){
+        //         $scope.totalPrice = $scope.subscription['plan__monthlyRate']*$scope.subscription['discount__rate']                
+        //     }
+        //     else{
+        //         $scope.totalPrice = $scope.subscription['plan__monthlyRate']
+        //     }
+        // },function error(){
+        //     console.log("No order found sorry")
+        // })
+
+
 
 
         $http({
@@ -120,6 +122,16 @@ app.controller('subscriptionCheckoutCtrl', ['$scope','$http','$window',function(
                 });
         },function error(){
             console.log("Client token not received.")
+        })
+    }
+
+    $scope.selectPlan = function(plan){
+        $http.get('/getplan/'+plan).then(function success(response){
+            $scope.selectedPlan = response.data
+            $scope.selected = true
+            $scope.discount = 0
+        },function error(response){
+            console.log("Error retrieving plan details")
         })
     }
 
@@ -141,9 +153,11 @@ app.controller('subscriptionCheckoutCtrl', ['$scope','$http','$window',function(
     $scope.pay = function () {
         $scope.braintreeDropin.requestPaymentMethod(function (err, payload) {
             $http({
-                url: "/payment/",
+                url: "/subscriptioncheckout/",
                 method: 'POST',
-                data: {'paymentNonce':payload.nonce}
+                data: {'paymentNonce':payload.nonce,
+                        'planId':$scope.selectedPlan.id,
+                        'discountCode':$scope.discountCode}
             }).then(function success(response){
                 console.log("Payment was successful")
                 $window.location.href = '/'
@@ -153,13 +167,14 @@ app.controller('subscriptionCheckoutCtrl', ['$scope','$http','$window',function(
         })
     };
 
-    $scope.applyDiscount= function(code,orderLine){
+    $scope.applyDiscount= function(code){
         $http({
                 url: "/applydiscount/",
                 method: 'POST',
                 data: {'discountCode':code}
               }).then(function success(response){
-                loadOrder(response.data)
+                $scope.discount = response.data
+                //loadOrder(response.data)
               },function error(){
                 console.log("Error processing discount")
               })
