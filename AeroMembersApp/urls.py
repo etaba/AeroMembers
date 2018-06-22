@@ -47,5 +47,5 @@ urlpatterns = [
     path('subscriptioncheckout/',views.subscriptionCheckout),
     #path('getinactivesubscription/',views.getInactiveSubscription),
     path('getplan/<int:planId>',views.getPlan),
-    path('google25f6029237164a78.html',views.googleThing)
+    path('google25f6029237164a78.html',views.googleVerification)
 ]

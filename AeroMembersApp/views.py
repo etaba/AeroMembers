@@ -11,10 +11,11 @@ from django.core.serializers.json import DjangoJSONEncoder
 from pprint import pprint
 import json, braintree
 from datetime import datetime
+import os
 
 BRAINTREE_MERCHANT_ID = "5vgz24sws5f9jw2k"
-BRAINTREE_PUBLIC_KEY = "2wcngqdvwszvfyq7"
-BRAINTREE_PRIVATE_KEY = "ee32c1d473e2cabe312a2d1c9b9ec89e"
+BRAINTREE_PUBLIC_KEY = "2422g8bt255hpqdf"
+BRAINTREE_PRIVATE_KEY = os.environ.get('BRAINTREE_SECRET_KEY')
 
 def signin(request):
     context = {}
@@ -702,7 +703,7 @@ def applyDiscount(request):
         return Http404("Invalid Discount Code")
 
 
-def googleThing(request):
+def googleVerification(request):
     return render(request,"google25f6029237164a78.html")
 
 
