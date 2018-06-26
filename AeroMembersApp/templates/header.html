@@ -29,8 +29,8 @@
                     <li class="dropdown nav-item">
                         <a href="#" class="dropdown-toggle nav-link" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">{{ user.first_name }} {{ user.last_name }}<span class="caret"></span></a>
                         <div class="dropdown-menu">
-                            {% if membership != None %}
-                            <a href="/manageplan" class="dropdown-item">Manage Membership ({{ membership }})</a>
+                            {% if request.session.userPlan != None %}
+                            <a href="/subscribe" class="dropdown-item">Manage Membership ({{ request.session.userPlan.name }})</a>
                             {% else %}
                             <a href="/subscribe" class="dropdown-item">Upgrade Membership</a>
                             {% endif %}
@@ -44,11 +44,11 @@
                         <a href="/signin" class="nav-link" role="button" >Sign In </a>
                     </li>
                     {% endif %}
-                    {% if currCompany != None %}
+                    {% if request.session.currCompany != None %}
                     <li class="dropdown nav-item">
-                        <a href="#" class="dropdown-toggle nav-link" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">{{ currCompany }}<span class="caret"></span></a>
+                        <a href="#" class="dropdown-toggle nav-link" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">{{ request.session.currCompany }}<span class="caret"></span></a>
                         <div class="dropdown-menu dropdown-menu-right">
-                            <a href="/viewcompany/{{currCompany.pk}}" class="dropdown-item">Details</a>
+                            <a href="/viewcompany/{{request.session.currCompany.pk}}" class="dropdown-item">Details</a>
                             <a href="/setcompany" class="dropdown-item">Select Other Company</a>
                         </div>
                     </li>
@@ -58,7 +58,7 @@
                             <a href="#" class="dropdown-toggle nav-link" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Companies
                                 <span class="caret"></span></a>
                             <div class="dropdown-menu dropdown-menu-right">
-                                {% for c in companies %}
+                                {% for c in request.session.companies %}
                                 <a href="/setcompany/{{c.company.pk}}/" class="dropdown-item">{{ c.company }}</a>
                                 {% endfor %}
                                 <a href="/companyregistration" class="dropdown-item">Add Company</a>

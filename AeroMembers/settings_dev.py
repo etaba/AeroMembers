@@ -67,7 +67,7 @@ TEMPLATES = [
                 'django.contrib.messages.context_processors.messages',
                 'social_django.context_processors.backends',
                 'social_django.context_processors.login_redirect',
-                'AeroMembersApp.contextProcessor.company',
+                # 'AeroMembersApp.contextProcessor.company',
             ],
         },
     },
@@ -142,7 +142,7 @@ SOCIAL_AUTH_PIPELINE = (
     'AeroMembersApp.pipeline.complete_profile',
     'social_core.pipeline.social_auth.associate_user',
     'social_core.pipeline.social_auth.load_extra_data',
-    'AeroMembersApp.pipeline.set_company',
+    'AeroMembersApp.pipeline.set_session',
 )
 
 LOGIN_URL = 'login'

@@ -1,8 +1,7 @@
-from django.shortcuts import redirect
 from social_core.pipeline.partial import partial
 from django.contrib.sessions.backends.db import SessionStore
-from AeroMembersApp.forms import UserForm, ProfileForm, ContactForm
-from AeroMembersApp.models import CompanyUser
+from django.forms.models import model_to_dict
+from AeroMembersApp.models import *
 
 @partial
 def complete_profile(strategy, backend, user, request, details, *args, **kwargs):
@@ -31,8 +30,11 @@ def complete_profile(strategy, backend, user, request, details, *args, **kwargs)
             current_partial = kwargs.get('current_partial')
             return strategy.redirect('/completesignup?username={0}&backend={1}'.format(user.username,current_partial.backend))
 
-def set_company(user,request, *args, **kwargs):
-    companies = CompanyUser.objects.filter(user=user)
-    if len(companies) == 1:
-        request.session['currCompanyId'] = companies[0].company.pk
+def set_session(user,request, *args, **kwargs):
+    request.session['companies'] = list(CompanyUser.objects.filter(user=user).values('company'))
+    if len(request.session['companies']) == 1:
+        request.session['currCompany'] = model_to_dict(request.session['companies'][0])
+    activeUserPlan = Subscription.objects.filter(user=user,status="Active",plan__type="USER")
+    if activeUserPlan.exists():
+        request.session['userPlan'] = model_to_dict(activeUserPlan.get().plan)
     return

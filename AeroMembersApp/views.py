@@ -7,8 +7,6 @@ from django.contrib import messages
 from django.forms.models import model_to_dict
 from AeroMembersApp.forms import *
 from social_django.models import UserSocialAuth
-from django.core.serializers.json import DjangoJSONEncoder
-from pprint import pprint
 import json, braintree
 from datetime import datetime
 import os
@@ -24,9 +22,12 @@ def signin(request):
         user = authenticate(username=request.POST['username'], password=request.POST['password'])
         if user is not None:
             login(request, user)
-            companies = CompanyUser.objects.filter(user=user)
-            if len(companies) == 1:
-                request.session['currCompanyId'] = companies[0].company.pk
+            request.session['companies'] = list(CompanyUser.objects.filter(user=user).values('company'))
+            if len(request.session['companies']) == 1:
+                request.session['currCompany'] = model_to_dict(request.session['companies'][0])
+            activeUserPlan = Subscription.objects.filter(user=user,status="Active",plan__type="USER")
+            if activeUserPlan.exists():
+                request.session['userPlan'] = model_to_dict(activeUserPlan.get().plan)
             return redirect('index')
         else:
             context = {'error':"Invalid Credentials"}
@@ -594,7 +595,6 @@ def subscriptionCheckout(request):
     postData = json.loads(request.body)
     paymentNonce = postData.get('paymentNonce',None)
     plan = Plan.objects.get(pk=postData['planId'])
-    import pdb; pdb.set_trace()
     if paymentNonce == None:
         raise Http404("Braintree payment nonce not received")
     #check if braintree customer already exists
@@ -619,6 +619,7 @@ def subscriptionCheckout(request):
         "payment_method_token": customer.payment_methods[0].token,
         "plan_id": plan.braintreeName,
     }
+    import pdb; pdb.set_trace()
     if 'discountCode' in postData.keys():
         discount = Discount.objects.get(code=postData['discountCode'])
         if discount != None:
@@ -628,12 +629,13 @@ def subscriptionCheckout(request):
 
     result = gateway.subscription.create(subscription)
     if result.is_success:
-        activeSub = Subscription.objects.filter(user=request.user,status="O",plan__type="USER")
+        activeSub = Subscription.objects.filter(user=request.user,status="Active",plan__type="USER")
         #if item is membership, delete any existing active order. memberships should be only lines on an order
         if activeSub.exists():
             activeSub.delete()
-        newSub = Subscription(user=request.user, plan=plan)
+        newSub = Subscription(user=request.user, plan=plan, status='Active')
         newSub.save()
+        request.session['userPlan'] = plan
         #TODO: log transaction detials? send order confirmation?
     else:
         for error in result.errors.deep_errors:
@@ -696,7 +698,6 @@ def applyDiscount(request):
     postData = json.loads(request.body)
     discountCode = postData['discountCode']
     discount = Discount.objects.get(code=discountCode)
-    import pdb; pdb.set_trace()
     if discount.active and discount.expiration >= datetime.now().date():
         return HttpResponse(discount.rate)
     else:

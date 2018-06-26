@@ -212,7 +212,7 @@ class Subscription(models.Model):
     company = models.OneToOneField('Company',on_delete=models.CASCADE,related_name='membership',unique=True, null=True)
     user = models.OneToOneField(User,on_delete=models.CASCADE,related_name='membership', null=True)
     plan = models.ForeignKey('Plan',on_delete=models.CASCADE)
-    #statuses: active, pending, etc
+    #statuses: active, pending, canceled
     status = models.CharField(max_length=64,default="inactive")
     braintreeID = models.CharField(max_length=32,null=True)
     discount = models.OneToOneField('Discount',related_name='discount',on_delete=models.DO_NOTHING,null=True)
