@@ -224,11 +224,11 @@ class Plan(models.Model):
     type = models.CharField(max_length=24)
     monthlyRate = models.FloatField()
     description = models.TextField()
-    braintreeName = models.CharField(max_length=200)
+    braintreeID = models.CharField(max_length=200)
 
 class Discount(models.Model):
     code = models.CharField(max_length=200,unique=True)
-    braintreeName = models.CharField(max_length=200)
+    braintreeID = models.CharField(max_length=200)
     active = models.BooleanField()
     rate = models.FloatField()
     expiration = models.DateField()

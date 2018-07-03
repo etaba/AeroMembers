@@ -6,7 +6,7 @@
 
   <div ng-show="!selected">
     {% for plan in plans %}
-      {% if plan != membership %}
+      {% if plan.pk != request.session.userPlan.id %}
       <div class="radio">
         <label><input type="radio" ng-model="plan" value="{{plan.pk}}">{{plan.name}}</label>
         <p>{{plan.description}}</p>

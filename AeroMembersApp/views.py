@@ -617,25 +617,25 @@ def subscriptionCheckout(request):
     #membership/recurring payment order
     subscription = {
         "payment_method_token": customer.payment_methods[0].token,
-        "plan_id": plan.braintreeName,
+        "plan_id": plan.braintreeID,
     }
-    import pdb; pdb.set_trace()
     if 'discountCode' in postData.keys():
         discount = Discount.objects.get(code=postData['discountCode'])
         if discount != None:
-            subscription['discounts'] = {'add':{'inherited_from_id':discount.braintreeName}}
+            subscription['discounts'] = {'add':[{'inherited_from_id':discount.braintreeID}]}
 
     #TODO: deal with preexisting or coexisting memberships
 
     result = gateway.subscription.create(subscription)
+    import pdb; pdb.set_trace()
     if result.is_success:
         activeSub = Subscription.objects.filter(user=request.user,status="Active",plan__type="USER")
         #if item is membership, delete any existing active order. memberships should be only lines on an order
         if activeSub.exists():
             activeSub.delete()
-        newSub = Subscription(user=request.user, plan=plan, status='Active')
+        newSub = Subscription(user=request.user, plan=plan, status='Active', braintreeID=result.subscription.id)
         newSub.save()
-        request.session['userPlan'] = plan
+        request.session['userPlan'] = model_to_dict(plan)
         #TODO: log transaction detials? send order confirmation?
     else:
         for error in result.errors.deep_errors:
