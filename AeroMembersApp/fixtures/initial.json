@@ -7,7 +7,7 @@
       "type": "USER",
       "description":"Silver membership for user",
       "monthlyRate": 10,
-      "braintreeName": "SILVER_USER"
+      "braintreeID": "SILVER_USER"
     }
   },
   {
@@ -17,8 +17,8 @@
       "name": "Gold",
       "type": "USER",
       "description":"Gold membership for user",
-      "monthlyRate": 10,
-      "braintreeName": "GOLD_USER"
+      "monthlyRate": 20,
+      "braintreeID": "GOLD_USER"
     }
   },
   {
@@ -28,8 +28,8 @@
       "name": "Platinum",
       "type": "USER",
       "description":"Platinum membership for user",
-      "monthlyRate": 10,
-      "braintreeName": "PLATINUM_USER"
+      "monthlyRate": 30,
+      "braintreeID": "PLATINUM_USER"
     }
   },
   {
@@ -39,8 +39,8 @@
       "name": "Silver",
       "type": "COMPANY",
       "description":"Silver membership for company",
-      "braintreeName": "SILVER_COMPANY",
-      "monthlyRate": 10
+      "braintreeID": "SILVER_COMPANY",
+      "monthlyRate": 40
     }
   },
   {
@@ -50,8 +50,8 @@
       "name": "Gold",
       "type": "COMPANY",
       "description":"Gold membership for company",
-      "braintreeName": "GOLD_COMPANY",
-      "monthlyRate": 10
+      "braintreeID": "GOLD_COMPANY",
+      "monthlyRate": 50
 
     }
   },
@@ -62,8 +62,8 @@
       "name": "Sponsor",
       "type": "COMPANY",
       "description":"Sponsor membership for company",
-      "braintreeName": "SPONSOR_COMPANY",
-      "monthlyRate": 10
+      "braintreeID": "SPONSOR_COMPANY",
+      "monthlyRate": 60
     }
   },
   {
@@ -71,7 +71,7 @@
     "pk":1,
     "fields":{
       "code":"12345",
-      "braintreeName":"USER_SILVER_DISCOUNT",
+      "braintreeID":"USER_SILVER_DISCOUNT",
       "active":true,
       "rate":0.25,
       "expiration":"2018-12-12"

@@ -150,7 +150,7 @@ SOCIAL_AUTH_PIPELINE = (
     'AeroMembersApp.pipeline.complete_profile',
     'social_core.pipeline.social_auth.associate_user',
     'social_core.pipeline.social_auth.load_extra_data',
-    'AeroMembersApp.pipeline.set_session',
+    # 'AeroMembersApp.pipeline.set_session',
 )
 
 LOGIN_URL = 'login'

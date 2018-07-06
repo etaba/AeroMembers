@@ -5,8 +5,22 @@
 <div class="container text-center" ng-controller="subscriptionCheckoutCtrl">
 
   <div ng-show="!selected">
+    {% if activeSubs %}
+      <div>
+        Current Subscriptions
+        {% for sub in activeSubs %}
+          <br>
+          {{ sub.plan.name }}
+          ${{ sub.totalPrice }}/Mo
+          <br>
+          <a href="/cancelsubscription/{{sub.id}}">Cancel</a>
+        {% endfor %}
+      </div>
+        Change Membership
+    {% endif %}
+
     {% for plan in plans %}
-      {% if plan.pk != request.session.userPlan.id %}
+      {% if plan.pk != request.session.userPlan.id and plan.pk != request.session.currCompany.plan.id %}
       <div class="radio">
         <label><input type="radio" ng-model="plan" value="{{plan.pk}}">{{plan.name}}</label>
         <p>{{plan.description}}</p>

@@ -209,15 +209,17 @@ class Item(models.Model):
     price = models.FloatField()
 
 class Subscription(models.Model):
-    company = models.OneToOneField('Company',on_delete=models.CASCADE,related_name='membership',unique=True, null=True)
-    user = models.OneToOneField(User,on_delete=models.CASCADE,related_name='membership', null=True)
+    company = models.ForeignKey('Company',on_delete=models.CASCADE,related_name='subscription', null=True)
+    user = models.ForeignKey(User,on_delete=models.CASCADE,related_name='subscription', null=True)
     plan = models.ForeignKey('Plan',on_delete=models.CASCADE)
-    #statuses: active, pending, canceled
+    #statuses: active, pending, canceled, inactive
     status = models.CharField(max_length=64,default="inactive")
     braintreeID = models.CharField(max_length=32,null=True)
     discount = models.OneToOneField('Discount',related_name='discount',on_delete=models.DO_NOTHING,null=True)
-    class Meta:
-        unique_together = ('user','plan')
+    def totalPrice(self):
+        return self.plan.monthlyRate - (self.plan.monthlyRate * (self.discount.rate if self.discount != None else 0))
+    # class Meta:
+    #     unique_together = ('user','plan','status')
 
 class Plan(models.Model):
     name = models.CharField(max_length=200)

@@ -22,12 +22,7 @@ def signin(request):
         user = authenticate(username=request.POST['username'], password=request.POST['password'])
         if user is not None:
             login(request, user)
-            request.session['companies'] = list(CompanyUser.objects.filter(user=user).values('company'))
-            if len(request.session['companies']) == 1:
-                request.session['currCompany'] = model_to_dict(request.session['companies'][0])
-            activeUserPlan = Subscription.objects.filter(user=user,status="Active",plan__type="USER")
-            if activeUserPlan.exists():
-                request.session['userPlan'] = model_to_dict(activeUserPlan.get().plan)
+            
             return redirect('index')
         else:
             context = {'error':"Invalid Credentials"}
@@ -39,6 +34,20 @@ def signin(request):
     return render(request, 'registration/signin.html',context)
 
 def index(request):
+    if request.user.is_authenticated:
+        request.session['companies'] = list(CompanyUser.objects.filter(user=request.user).values('company','is_admin'))
+        for cu in request.session['companies']:
+            cu['company'] = model_to_dict(Company.objects.get(pk=cu['company']))
+        if len(request.session['companies']) == 1:
+            import pdb; pdb.set_trace()
+            currCompany = model_to_dict(request.session['companies'][0])
+            activeCompanyPlan = Subscription.objects.filter(company__pk=currCompany['id'],status="active",plan__type="COMPANY")
+            if activeCompanyPlan.exists():
+                currCompany['plan'] = model_to_dict(activeCompanyPlan.get().plan)
+            request.session['currCompany'] = currCompany
+        activeUserPlan = Subscription.objects.filter(user=request.user,status="active",plan__type="USER")
+        if activeUserPlan.exists():
+            request.session['userPlan'] = model_to_dict(activeUserPlan.get().plan)
     return render(request, 'index.html');
 
 def signup(request):
@@ -112,12 +121,11 @@ def companyRegistration(request):
             company = companyForm.save()
             cu = CompanyUser(user=request.user,company=company,is_admin=True)
             cu.save()
-            return redirect('managecompanyplan')
-        else:
-            return render(request, 'registration/companyregistration.html',{'companyForm':companyForm})
+            request.session['currCompany'] = model_to_dict(cu)
+            return redirect('subscribecompany')
     else:
         companyForm = CompanyForm()
-        return render(request, 'registration/companyregistration.html',{'companyForm':companyForm})
+    return render(request, 'registration/companyregistration.html',{'companyForm':companyForm})
 
 def viewCompany(request,companyId):
     company  = Company.objects.get(pk=companyId)
@@ -127,9 +135,13 @@ def viewCompany(request,companyId):
 
 def setCompany(request,companyId=None):
     if companyId == None:
-        request.session['currCompanyId'] = None
+        request.session['currCompany'] = None
     else:
-        request.session['currCompanyId'] = companyId
+        currCompany = [ cu for cu in request.session['companies'] if cu['company']['id']==companyId ][0]
+        activeCompanyPlan = Subscription.objects.filter(company__pk=companyId,status="active",plan__type="COMPANY")
+        if activeCompanyPlan.exists():
+            currCompany['plan'] = model_to_dict(activeCompanyPlan.get().plan)
+        request.session['currCompany'] = currCompany
     return redirect('index')
 
 @login_required
@@ -143,6 +155,12 @@ def editCompany(request,companyId):
             companyForm = CompanyForm(request.POST,instance=company)
             if companyForm.is_valid():
                 companyForm.save()
+            company = Company.objects.get(pk=companyId)
+            request.session['currCompany'] = model_to_dict(CompanyUser.objects.get(company=company,user=request.user))
+            request.session['currCompany']['company'] = model_to_dict(company)
+            activeCompanyPlan = Subscription.objects.filter(company__pk=companyId,status="active",plan__type="COMPANY")
+            if activeCompanyPlan.exists():
+                request.session['currCompany']['plan'] = model_to_dict(activeCompanyPlan.get().plan)
             return redirect(reverse('viewcompany',kwargs={'companyId':companyId}))
 
         else:
@@ -242,7 +260,7 @@ def thread(request,threadId):
     try:
         thread = Thread.objects.get(pk=threadId)
     except Thread.DoesNotExist:
-        raise Http404("Thread does not exist")
+        raise ValueError("Thread does not exist")
     if request.method == 'POST' and request.user.is_authenticated:
         threadCommentForm = ThreadCommentForm(request.POST)
         if threadCommentForm.is_valid():
@@ -270,7 +288,7 @@ def comments(request,threadId):
             else:
                 comment['scoreClass'] = ""
     except Thread.DoesNotExist:
-        raise Http404("Thread does not exist")
+        raise ValueError("Thread does not exist")
     data = {
             'comments':threadJSON['comments'],
             'threadId':threadId,
@@ -313,7 +331,7 @@ def editComment(request,threadId):
     if post.createdBy == request.user or request.user.is_superuser:
         post.content =  request.POST['commentContent']
     else:
-        raise Http404("Cannot edit another user's post")
+        raise ValueError("Cannot edit another user's post")
         return HttpResponse()
     post.save()
     return redirect(reverse('thread',kwargs={'threadId':threadId}))
@@ -323,7 +341,7 @@ def editThread(request):
     if post.createdBy == request.user:
         post.content =  request.POST['threadContent']
     else:
-        raise Http404("Cannot edit another user's post")
+        raise ValueError("Cannot edit another user's post")
         return HttpResponse()
     post.save()
     return redirect(reverse('thread',kwargs={'threadId':request.POST['threadId']}))
@@ -395,7 +413,7 @@ def checkout(request):
         postData = json.loads(request.body)
         paymentNonce = postData.get('paymentNonce',None)
         if paymentNonce == None:
-            raise Http404("Braintree payment nonce not received")
+            raise ValueError("Braintree payment nonce not received")
         #check if braintree customer already exists
         try:
             customer = gateway.customer.find(str(request.user.pk))
@@ -411,11 +429,11 @@ def checkout(request):
                 "payment_method_nonce": paymentNonce,
             })
             if not customer.is_success:
-                raise Http404(customer.error)
+                raise ValueError(customer.error)
         #retrieve order
         orderQ = Order.objects.filter(requestingUser=request.user,status="O")
         if not orderQ.exists():
-            raise Http404("No open orders found for user.")
+            raise ValueError("No open orders found for user.")
         else:
             order = orderQ.get()
 
@@ -436,7 +454,7 @@ def checkout(request):
                 print(error.attribute)
                 print(error.code)
                 print(error.message)
-            raise Http404(result.errors.deep_errors)
+            raise ValueError(result.errors.deep_errors)
         #TODO: return transaction id or redirect to confirmation page
         return HttpResponse("Payment success")
 
@@ -528,14 +546,6 @@ def getOrder(request):
         response = []
     return HttpResponse(json.dumps(response))
 
-# def getInactiveSubscription(request):
-#     sub = Subscription.objects.filter(user=request.user,status="inactive")
-#     if sub.exists():
-#         response = list(sub.values('pk','plan__name','plan__description','plan__monthlyRate','discount__rate'))
-#     else:
-#         response = []
-#     return HttpResponse(json.dumps(response))
-
 def clientToken(request):
     gateway = braintree.BraintreeGateway(
         braintree.Configuration(
@@ -558,16 +568,32 @@ def subscribe(request):
         plans = Plan.objects.filter(type='USER')
         context = {"plans":plans}
         #retrieve active user subscriptions
-        activeSub = Subscription.objects.filter(user=request.user,status="O",plan__type="USER")
-        if activeSub.exists():
-            context["activePlan"] = activeSub.plan
+        activeSubs = Subscription.objects.filter(user=request.user,status="active",plan__type="USER")
+        if activeSubs.exists() > 0:
+            context['activeSubs'] = []
+            for sub in activeSubs:
+                activeSub = model_to_dict(sub)
+                activeSub['plan'] = model_to_dict(sub.plan)
+                activeSub['totalPrice'] = sub.totalPrice()
+                context['activeSubs'].append(activeSub)
         return render(request,'subscribe.html',context)
 
 @login_required
-def manageCompanyPlan(request):
-    if request.method == 'GET':
-        plans = Plan.objects.filter(type='COMPANY')
-        return render(request,'manageplan.html',{"plans":plans})
+def subscribeCompany(request):
+    plans = Plan.objects.filter(type='COMPANY')
+    context = {"plans":plans}
+    #retrieve active user subscriptions
+    if 'currCompany' in request.session.keys():
+        currCompany = Company.objects.get(pk=request.session['currCompany']['company']['id'])
+        activeSubs = Subscription.objects.filter(user=request.user,company=currCompany,status="active",plan__type="COMPANY")
+        if activeSubs.exists():
+            context['activeSubs'] = []
+            for sub in activeSubs:
+                activeSub = model_to_dict(sub)
+                activeSub['plan'] = model_to_dict(sub.plan)
+                activeSub['totalPrice'] = sub.totalPrice()
+                context['activeSubs'].append(activeSub)
+    return render(request,'subscribe.html',context)
 
 @login_required
 def selectPlan(request):
@@ -596,7 +622,7 @@ def subscriptionCheckout(request):
     paymentNonce = postData.get('paymentNonce',None)
     plan = Plan.objects.get(pk=postData['planId'])
     if paymentNonce == None:
-        raise Http404("Braintree payment nonce not received")
+        raise ValueError("Braintree payment nonce not received")
     #check if braintree customer already exists
     try:
         customer = gateway.customer.find(str(request.user.pk))
@@ -612,7 +638,7 @@ def subscriptionCheckout(request):
             "payment_method_nonce": paymentNonce,
         })
         if not customer.is_success:
-            raise Http404(customer.error)
+            raise ValueError(customer.error)
 
     #membership/recurring payment order
     subscription = {
@@ -627,25 +653,72 @@ def subscriptionCheckout(request):
     #TODO: deal with preexisting or coexisting memberships
 
     result = gateway.subscription.create(subscription)
-    import pdb; pdb.set_trace()
     if result.is_success:
-        activeSub = Subscription.objects.filter(user=request.user,status="Active",plan__type="USER")
-        #if item is membership, delete any existing active order. memberships should be only lines on an order
-        if activeSub.exists():
-            activeSub.delete()
-        newSub = Subscription(user=request.user, plan=plan, status='Active', braintreeID=result.subscription.id)
+        if plan.type == 'USER':
+            activeSub = Subscription.objects.filter(user=request.user,status="active",plan__type="USER")
+            if activeSub.exists():
+                activeSub = activeSub.get()
+                cancelation = gateway.subscription.cancel(activeSub.braintreeID)
+                if cancelation.is_success:
+                    activeSub.status="canceled"
+                    activeSub.save()
+                else:
+                    raise ValueError(cancelation.errors.deep_errors)
+            newSub = Subscription(user=request.user, plan=plan, status='active', braintreeID=result.subscription.id)
+            request.session['userPlan'] = model_to_dict(plan)
+        else: #company membership
+            company = Company.objects.get(pk=request.session['currCompany']['company']['id'])
+            activeSub = Subscription.objects.filter(company=company,user=request.user,status="active",plan__type="COMPANY")
+            if activeSub.exists():
+                activeSub = activeSub.get()
+                cancelation = gateway.subscription.cancel(activeSub.braintreeID)
+                if cancelation.is_success:
+                    activeSub.status="canceled"
+                    activeSub.save()
+                else:
+                    raise ValueError(cancelation.errors.deep_errors)
+            newSub = Subscription(user=request.user, company=company, plan=plan, status='active', braintreeID=result.subscription.id)
+            request.session['currCompany']['plan'] = model_to_dict(plan)
+            #force persistence of session
+            request.session['dummy'] = 1
         newSub.save()
-        request.session['userPlan'] = model_to_dict(plan)
         #TODO: log transaction detials? send order confirmation?
     else:
         for error in result.errors.deep_errors:
             print(error.attribute)
             print(error.code)
             print(error.message)
-        raise Http404(result.errors.deep_errors)
+        raise ValueError(result.errors.deep_errors)
 
     #TODO: return transaction id or redirect to confirmation page
     return HttpResponse("Payment success")
+
+@login_required
+def cancelSubscription(request,subID):
+    activeSub = Subscription.objects.filter(pk=subID, user=request.user, status='active')
+    if activeSub.exists():
+        activeSub = activeSub.get()
+        gateway = braintree.BraintreeGateway(
+            braintree.Configuration(
+                braintree.Environment.Sandbox,
+                merchant_id=BRAINTREE_MERCHANT_ID,
+                public_key=BRAINTREE_PUBLIC_KEY,
+                private_key=BRAINTREE_PRIVATE_KEY
+            ))
+        result = gateway.subscription.cancel(activeSub.braintreeID)
+        if result.is_success:
+            if activeSub.plan.type == 'USER':
+                if request.session['userPlan']['id'] == activeSub.plan.pk:
+                    request.session.pop('userPlan',None)
+            elif activeSub.plan.type == 'COMPANY':
+                if request.session['currCompany']['plan']['id'] == activeSub.plan.pk:
+                    request.session['currCompany'].pop('plan',None)
+                    #force session persist
+                    request.session['dummy'] = 1
+            activeSub.status="canceled"
+            activeSub.save()
+            return redirect('index')
+    raise ValueError("There was an error canceling your subscription")
 
 def addOrderLine(request):
     if request.method == 'POST':

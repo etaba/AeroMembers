@@ -180,6 +180,14 @@ app.controller('subscriptionCheckoutCtrl', ['$scope','$http','$window',function(
               })
     }
 
+    // $scope.cancelSubscription=function(braintreeID){
+    //     $http.get("/cancelSubscription/"+braintreeID.toString()).then(function success(response){
+            
+    //     }, function error(){
+    //         console.log("Error canceling your subscription")
+    //     })
+    // }
+
     init();
     
 }]);

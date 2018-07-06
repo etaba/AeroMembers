@@ -46,10 +46,15 @@
                     {% endif %}
                     {% if request.session.currCompany != None %}
                     <li class="dropdown nav-item">
-                        <a href="#" class="dropdown-toggle nav-link" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">{{ request.session.currCompany }}<span class="caret"></span></a>
+                        <a href="#" class="dropdown-toggle nav-link" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">{{ request.session.currCompany.company.name }}<span class="caret"></span></a>
                         <div class="dropdown-menu dropdown-menu-right">
-                            <a href="/viewcompany/{{request.session.currCompany.pk}}" class="dropdown-item">Details</a>
-                            <a href="/setcompany" class="dropdown-item">Select Other Company</a>
+                            <a href="/viewcompany/{{request.session.currCompany.company.id}}" class="dropdown-item">Details</a>
+                            {% if request.session.currCompany.is_admin %}
+                                <a href="/subscribecompany/" class="dropdown-item">Manage Membership ({{ request.session.currCompany.plan.name }})</a>
+                                                            {% endif %}
+                            {% if request.session.companies|length > 1 %}
+                                <a href="/setcompany" class="dropdown-item">Select Other Company</a>
+                            {% endif %}
                         </div>
                     </li>
                     {% else %}
@@ -59,17 +64,17 @@
                                 <span class="caret"></span></a>
                             <div class="dropdown-menu dropdown-menu-right">
                                 {% for c in request.session.companies %}
-                                <a href="/setcompany/{{c.company.pk}}/" class="dropdown-item">{{ c.company }}</a>
+                                    <a href="/setcompany/{{c.company.id}}/" class="dropdown-item">{{ c.company.name }}</a>
                                 {% endfor %}
                                 <a href="/companyregistration" class="dropdown-item">Add Company</a>
                             </div>
                         </li>
-                        <li class="dropdown nav-item">
-                            <a href="/checkout" class="nav-link" role="button" >Cart</a>
-                        </li>
+
                         {% endif %}
                     {% endif %}
-                </ul>
+                        <li class="dropdown nav-item">
+                            <a href="/checkout" class="nav-link" role="button" >Cart</a>
+                        </li>                </ul>
             </div>
             <!-- /.navbar-collapse -->
 
