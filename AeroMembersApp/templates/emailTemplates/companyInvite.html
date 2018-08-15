@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{%block content%}
+    {% csrf_token %}
+    <br><br><br>
+    <div>
+        You've been invited by {{inviter}} to join {{company}}'s AeroMember {{plan}} plan. To accept this invitation, click the following link which will take you to AeroMembers to complete your registration:  
+        <br>
+        {{link}}
+        <br>
+        IMPORTANT: This link may only be used once and shouldn't be shared with anyone.
+    </div>
+{%endblock%}

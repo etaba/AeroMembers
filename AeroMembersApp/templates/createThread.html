@@ -7,14 +7,13 @@
     {% csrf_token %}
     {% for field in threadForm %}
       <p>
-        {{ field.label_tag }}<br>
         {{ field }}
         {% for error in field.errors %}
           <p style="color: red">{{ error }}</p>
         {% endfor %}
       </p>
     {% endfor %}
-    <button class="btn btn-lg btn-primary btn-block btn-center" type="submit" data-bindattr-3="3">Start Thread</button>
+    <button class="btn btn-lg btn-primary btn-block" type="submit" data-bindattr-3="3">Start Thread</button>
   </form>
 </div>
 {%endblock%}

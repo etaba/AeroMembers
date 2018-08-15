@@ -235,6 +235,12 @@ class Discount(models.Model):
     rate = models.FloatField()
     expiration = models.DateField()
 
+class EmailRequest(models.Model):
+    sentOn = models.DateTimeField(default=timezone.now)
+    recipientEmail = models.CharField(max_length=255)
+    code = models.CharField(max_length=32,unique=True)
+    sender = models.ForeignKey(User,on_delete=models.CASCADE,related_name='emailRequests')
+    company = models.ForeignKey('Company',on_delete=models.CASCADE,related_name='emailRequests', null=True)
 
 
 

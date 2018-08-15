@@ -35,6 +35,11 @@ ALLOWED_HOSTS = ['www.aeromembers.com',
                  'www.aeromembers.info',
                  'aeromembers.info']
 
+EMAIL_HOST = 'sub5.mail.dreamhost.com'
+EMAIL_PORT = 587
+EMAIL_HOST_USER = 'support@aeromembers.com'
+EMAIL_HOST_PASSWORD = os.environ.get('AEROMEMBERS_EMAIL_PASS')
+EMAIL_USE_TLS = True
 
 # Application definition
 

@@ -3,15 +3,15 @@
 {%include 'header.html'%}
 
 <div class="container text-center">
-  <form method="post" action="/signin/" class="form-signin" data-ember-action="2">
+  <form method="post" action="/signin/{% if request.GET.next %}?next={{ request.GET.next }}{% endif %}" class="form-signin" data-ember-action="2">
     {% csrf_token %}
         <h2 class="form-signin-heading">Sign in</h2>
 <br>
-    <a href="{% url 'social:begin' 'facebook' %}"
+    <a href="{% url 'social:begin' 'facebook' %}{% if request.GET.next %}?next={{ request.GET.next }}{% endif %}"
      class="btn btn-primary social-login-btn social-facebook"><i class="fa fa-facebook"></i></a>
-  <a href="{% url 'social:begin' backend='linkedin-oauth2' %}"
+  <a href="{% url 'social:begin' backend='linkedin-oauth2' %}{% if request.GET.next %}?next={{ request.GET.next }}{% endif %}"
      class="btn btn-primary social-login-btn social-linkedin"><i class="fa fa-linkedin"></i></a>
-  <a href="{% url 'social:begin' backend='google-oauth2' %}" 
+  <a href="{% url 'social:begin' backend='google-oauth2' %}{% if request.GET.next %}?next={{ request.GET.next }}{% endif %}" 
      class="btn btn-primary social-login-btn social-google"><i class="fa fa-google-plus"></i></a>
     <hr>
     {{ userForm.username }}
@@ -36,7 +36,7 @@
   <br>
   
   <br>
-  <a href="/signup"><p><strong>Don't have an account? Sign Up</strong></p></a>
+  <a href="/signup/{% if request.GET.next %}?next={{ request.GET.next }}{% endif %}"><p><strong>Don't have an account? Sign Up</strong></p></a>
 
 </div>
 {%endblock%}

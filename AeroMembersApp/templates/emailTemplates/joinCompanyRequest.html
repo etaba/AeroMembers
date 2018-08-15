@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{%block content%}
+    <br><br><br>
+    <div>
+    	<br>
+        {{requester}} has requested to join {{company}}'s AeroMember {{plan}} plan. To accept this request, click the following link which will take you to an AeroMembers confirmation page:  
+        <br>
+        <a href={{link}}>{{link}}</a>
+        <br>
+        IMPORTANT: If you do not recognize {{requester}}, ignore this email.
+    </div>
+{%endblock%}

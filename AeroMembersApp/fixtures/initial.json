@@ -76,6 +76,89 @@
       "rate":0.25,
       "expiration":"2018-12-12"
     }
+  },
+  {
+    "model": "auth.user",
+    "pk":1,
+    "fields":{
+      "username":"user1@gmail.com",
+      "email":"user1@gmail.com",
+      "first_name":"user",
+      "last_name":"1",
+      "password":"pbkdf2_sha256$100000$b81lvO7aM8SV$k+tIYrfj9zbZ9TeNj56WvcrNNk1bMY0DrLRFPRVgThc="
+    }
+  },
+  {
+    "model": "auth.user",
+    "pk":2,
+    "fields":{
+      "username":"user2@gmail.com",
+      "email":"user2@gmail.com",
+      "first_name":"user",
+      "last_name":"2",
+      "password":"pbkdf2_sha256$100000$b81lvO7aM8SV$k+tIYrfj9zbZ9TeNj56WvcrNNk1bMY0DrLRFPRVgThc="
+    }
+  },
+  {
+    "model": "auth.user",
+    "pk":3,
+    "fields":{
+      "username":"user3@gmail.com",
+      "email":"user3@gmail.com",
+      "first_name":"user",
+      "last_name":"3",
+      "password":"pbkdf2_sha256$100000$b81lvO7aM8SV$k+tIYrfj9zbZ9TeNj56WvcrNNk1bMY0DrLRFPRVgThc="
+    }
+  },
+  {
+    "model": "auth.user",
+    "pk":4,
+    "fields":{
+      "username":"user4@gmail.com",
+      "email":"user4@gmail.com",
+      "first_name":"user",
+      "last_name":"4",
+      "password":"pbkdf2_sha256$100000$b81lvO7aM8SV$k+tIYrfj9zbZ9TeNj56WvcrNNk1bMY0DrLRFPRVgThc="
+    }
+  },
+  {
+    "model": "AeroMembersApp.company", 
+    "pk": 1, 
+    "fields": {
+      "name": "Company1", 
+      "department": "test", 
+      "cage_code": "223", 
+      "number_of_employees": 123, 
+      "activity_type": "DES", 
+      "naics": 1, 
+      "description": "test"
+    }
+  },
+  {
+    "model": "AeroMembersApp.companyuser", 
+    "pk": 1, 
+    "fields": {
+      "user": 1, 
+      "company": 1, 
+      "is_admin": true
+    }
+  },
+  {
+    "model": "AeroMembersApp.companyuser", 
+    "pk": 2, 
+    "fields": {
+      "user": 2, 
+      "company": 1, 
+      "is_admin": false
+    }
+  },
+  {
+    "model": "AeroMembersApp.companyuser", 
+    "pk": 3, 
+    "fields": {
+      "user": 3, 
+      "company": 1, 
+      "is_admin": false
+    }
   }
-
 ]

@@ -4,15 +4,15 @@
 <div class="container text-center">
   <h2>Sign Up</h2>
   {% if not backend %}
-  <a href="{% url 'social:begin' 'facebook' %}"
+  <a href="{% url 'social:begin' 'facebook' %}{% if request.GET.next %}?next={{ request.GET.next }}{% endif %}"
      class="btn btn-primary social-login-btn social-facebook"><i class="fa fa-facebook"></i></a>
-  <a href="{% url 'social:begin' backend='linkedin-oauth2' %}"
+  <a href="{% url 'social:begin' backend='linkedin-oauth2' %}{% if request.GET.next %}?next={{ request.GET.next }}{% endif %}"
      class="btn btn-primary social-login-btn social-linkedin"><i class="fa fa-linkedin"></i></a>
-  <a href="{% url 'social:begin' backend='google-oauth2' %}"
+  <a href="{% url 'social:begin' backend='google-oauth2' %}{% if request.GET.next %}?next={{ request.GET.next }}{% endif %}"
      class="btn btn-primary social-login-btn social-google"><i class="fa fa-google-plus"></i></a>
   <hr>
   {% endif %}
-  <form method="post" action="/signup/" >
+  <form method="post" action="/signup/{% if request.GET.next %}?next={{ request.GET.next }}{% endif %}" >
     {% csrf_token %}
     {% for field in userForm %}
       <p>

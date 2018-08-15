@@ -10,6 +10,8 @@ urlpatterns = [
     path('completesignup/', views.completeSignup,name='completeSignup'),
     path('companyregistration/', views.companyRegistration),
     path('editcompany/<int:companyId>/', views.editCompany),
+    path('managecompanymembers/<int:companyId>/', views.manageCompanyMembers),
+    path('managecompanymembers/<int:companyId>/members/', views.getCompanyUsers),
     path('viewcompany/<int:companyId>', views.viewCompany, name='viewcompany'),
     path('setcompany/', views.setCompany),
     path('setcompany/<int:companyId>/', views.setCompany),
@@ -48,5 +50,11 @@ urlpatterns = [
     path('cancelsubscription/<int:subID>',views.cancelSubscription),
     #path('getinactivesubscription/',views.getInactiveSubscription),
     path('getplan/<int:planId>',views.getPlan),
-    path('google25f6029237164a78.html',views.googleVerification)
+    path('google25f6029237164a78.html',views.googleVerification),
+    path('joincompany',views.sendJoinCompanyRequest),
+    path('acceptjoinrequest/<str:requestCode>',views.acceptJoinCompanyRequest),    
+    path('acceptcompanyinvite/<str:invitationCode>',views.acceptCompanyInvite),    
+    path('sendaeromemberinvite',views.sendAeroMemberInvite),
+    path('getcompanies',views.getCompanies),
+
 ]

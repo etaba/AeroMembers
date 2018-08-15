@@ -5,11 +5,16 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import AdminPasswordChangeForm
 from django.contrib import messages
 from django.forms.models import model_to_dict
+from django.core.mail import EmailMessage
+from django.template.loader import get_template
+from django.db import IntegrityError
+
+
+import os, json, braintree, secrets, string
+
 from AeroMembersApp.forms import *
 from social_django.models import UserSocialAuth
-import json, braintree
 from datetime import datetime
-import os
 
 BRAINTREE_MERCHANT_ID = "5vgz24sws5f9jw2k"
 BRAINTREE_PUBLIC_KEY = "2422g8bt255hpqdf"
@@ -22,8 +27,8 @@ def signin(request):
         user = authenticate(username=request.POST['username'], password=request.POST['password'])
         if user is not None:
             login(request, user)
-            
-            return redirect('index')
+            redirectURL = request.GET.get('next','/')
+            return redirect(redirectURL)
         else:
             context = {'error':"Invalid Credentials"}
             userForm = SigninForm()
@@ -39,9 +44,8 @@ def index(request):
         for cu in request.session['companies']:
             cu['company'] = model_to_dict(Company.objects.get(pk=cu['company']))
         if len(request.session['companies']) == 1:
-            import pdb; pdb.set_trace()
-            currCompany = model_to_dict(request.session['companies'][0])
-            activeCompanyPlan = Subscription.objects.filter(company__pk=currCompany['id'],status="active",plan__type="COMPANY")
+            currCompany = request.session['companies'][0]
+            activeCompanyPlan = Subscription.objects.filter(company__pk=currCompany['company']['id'],status="active",plan__type="COMPANY")
             if activeCompanyPlan.exists():
                 currCompany['plan'] = model_to_dict(activeCompanyPlan.get().plan)
             request.session['currCompany'] = currCompany
@@ -50,8 +54,7 @@ def index(request):
             request.session['userPlan'] = model_to_dict(activeUserPlan.get().plan)
     return render(request, 'index.html');
 
-def signup(request):
-    #CompanyFormset = formset_factory(CompanyForm, extra = )
+def signup(request,email=None):
     if request.method == 'POST':
         userForm = UserForm(request.POST)
         profileForm = ProfileForm(request.POST)
@@ -73,7 +76,8 @@ def signup(request):
             user = authenticate(username=user.username, password=userForm.cleaned_data.get('password'))
             if user is not None:
                 login(request, user)
-                return redirect('index')
+                redirectURL = request.GET.get('next','/')
+                return redirect(redirectURL)
     else:
         userForm = UserForm()
         profileForm = ProfileForm()
@@ -121,18 +125,87 @@ def companyRegistration(request):
             company = companyForm.save()
             cu = CompanyUser(user=request.user,company=company,is_admin=True)
             cu.save()
-            request.session['currCompany'] = model_to_dict(cu)
+            currCompany = model_to_dict(cu)
+            currCompany['company'] = model_to_dict(company)
+            request.session['currCompany'] = currCompany
             return redirect('subscribecompany')
     else:
         companyForm = CompanyForm()
     return render(request, 'registration/companyregistration.html',{'companyForm':companyForm})
 
+@login_required
+def manageCompanyMembers(request,companyId):
+    company = Company.objects.get(pk=companyId)
+    companyUser = CompanyUser.objects.get(company=company,user=request.user)
+    if not companyUser or not companyUser.is_admin:
+        raise ValueError("You are not an administrator of this company.")
+    else:
+        if request.method == "GET":
+            return render(request, 'manageCompanyMembers.html')
+        if request.method == 'POST':
+            changes = json.loads(request.body)
+            for change in changes:
+                if change['action'] == 'REMOVE':
+                    userToRemove = CompanyUser.objects.get(company=company,user__email=change['email'])
+                    userToRemove.delete()
+                elif change['action'] == 'EDIT':
+                    userToEdit = CompanyUser.objects.get(company=company,user__email=change['email'])
+                    userToEdit.is_admin = change['isAdmin']
+                    userToEdit.save()
+            for inviteeEmail in [c['email'] for c in changes if c['action'] == 'ADD']:
+                html = get_template('emailTemplates/companyInvite.html')
+
+                inviter = f"{request.user.first_name} {request.user.last_name} ({request.user.email})"
+                #get new and unique code
+                while True:
+                    inviteCode = ''.join(secrets.choice(string.ascii_lowercase + string.digits) for _ in range(32))
+                    duplicateRequest = EmailRequest.objects.filter(code=inviteCode)
+                    if not duplicateRequest.exists():
+                        break
+                link = f"https://www.aeromembers.org/acceptcompanyinvite/{inviteCode}"
+                plan = company.subscription.get(status='active').plan
+                context = {'link':link,
+                            'inviter':inviter,
+                            'company':company.name,
+                            'plan':plan.name
+                        }
+                html_content = html.render(context)
+
+                subject = f"Invitation to join {company.name} AeroMember plan from {inviter}"
+                from_email = 'AeroMembers <noreply@aeromembers.org>'
+                msg = EmailMessage(subject, html_content, from_email, [inviteeEmail])
+                msg.content_subtype = "html"  # Main content is now text/html
+                msg.send()
+
+                emailRequest = EmailRequest(sentOn = datetime.now().date(),sender=request.user,company=company,recipientEmail=inviteeEmail,code=inviteCode)
+                emailRequest.save()
+            return HttpResponse()
+
+@login_required
+def getCompanyUsers(request,companyId):
+    company = Company.objects.get(pk=companyId)
+    companyUser = CompanyUser.objects.get(company=company,user=request.user)
+    if not companyUser or not companyUser.is_admin:
+        raise ValueError("You are not an administrator of this company.")
+    else:
+        if request.method == "GET":
+            companyUsers = CompanyUser.objects.filter(company=company).exclude(user=request.user)
+            members = [{'name':f"{cu.user.first_name} {cu.user.last_name}",'email':cu.user.email,'isAdmin':cu.is_admin} for cu in companyUsers]
+            return JsonResponse(members,safe=False)
+
+@login_required
+def getCompanies(request):
+    companies = Company.objects.all()
+    return HttpResponse(json.dumps([c.name for c in companies] + ['oracle']))
+
+@login_required
 def viewCompany(request,companyId):
     company  = Company.objects.get(pk=companyId)
     companyUser = CompanyUser.objects.filter(company=company,user=request.user)
     isAdmin = companyUser.get().is_admin if companyUser else False
     return render(request, 'viewCompany.html',{'company':company,'isAdmin':isAdmin})
 
+@login_required
 def setCompany(request,companyId=None):
     if companyId == None:
         request.session['currCompany'] = None
@@ -149,7 +222,7 @@ def editCompany(request,companyId):
     company = Company.objects.get(pk=companyId)
     companyUser = CompanyUser.objects.get(company=company,user=request.user)
     if not companyUser or not companyUser.is_admin:
-        return Http404()
+        raise ValueError("You are not an administrator of this company.")
     else:
         if request.method == 'POST':
             companyForm = CompanyForm(request.POST,instance=company)
@@ -166,7 +239,6 @@ def editCompany(request,companyId):
         else:
             companyForm = CompanyForm(instance=company)
             return render(request, 'registration/editCompany.html',{'companyForm':companyForm,'companyId':companyId})
-
 
 def completeSignup(request):
     if request.method == 'POST':
@@ -775,6 +847,90 @@ def applyDiscount(request):
         return HttpResponse(discount.rate)
     else:
         return Http404("Invalid Discount Code")
+
+#send invitation to join aeromembers.com
+@login_required
+def sendAeroMemberInvite(request):
+    #make sure user doesnt already exist?
+    if request.method == 'POST':
+        postData = json.loads(request.body)
+        html = get_template('emailTemplates/aeromemberInvite.html')
+        link = f"https://www.aeromembers.org/signup"
+        context = {'link':link,
+                    'requester':f"{request.user.first_name} {request.user.last_name} ({request.user.email})",
+                }
+        html_content = html.render(context)
+
+        subject = f"{request.user.first_name} {request.user.last_name} has invited you to try AeroMembers"
+        from_email = 'AeroMembers <noreply@aeromembers.org>'
+        to = [[invitee['email'] for invitee in postData['invitees']]]
+        msg = EmailMessage(subject, html_content, from_email, to)
+        msg.content_subtype = "html"  # Main content is now text/html
+        msg.send()
+        return HttpResponse()
+    if request.method == 'GET':
+        return render(request,'sendInvites.html')
+
+
+#send request to company admins for permission to be added to the company and its membership plan
+@login_required
+def sendJoinCompanyRequest(request):
+    if request.method == 'POST':
+        company = Company.objects.get(name=request.POST['company'])
+
+        html = get_template('emailTemplates/joinCompanyRequest.html')
+        #get new and unique code
+        while True:
+            requestCode = ''.join(secrets.choice(string.ascii_lowercase + string.digits) for _ in range(32))
+            duplicateRequest = EmailRequest.objects.filter(code=requestCode)
+            if not duplicateRequest.exists():
+                break
+        link = f"https://www.aeromembers.org/acceptrequest/{requestCode}"
+        plan = company.subscription.get().plan
+        context = {'link':link,
+                    'requester':f"{request.user.profile} ({request.user.email})",
+                    'company':company.name,
+                    'plan':plan.name,
+                }
+        html_content = html.render(context)
+
+        subject = f"Request to join {company.name} AeroMember plan from {request.user.profile}"
+        from_email = 'AeroMembers <noreply@aeromembers.org>'
+        to = [companyAdmin.user.email for companyAdmin in CompanyUser.objects.filter(company=company,is_admin=True)]
+        msg = EmailMessage(subject, html_content, from_email, to)
+        msg.content_subtype = "html"  # Main content is now text/html
+        msg.send()
+
+        emailRequest = EmailRequest(sentOn = datetime.now().date(),sender=request.user,company=company,recipientEmail=','.join(to),code=requestCode)
+        emailRequest.save()
+        return HttpResponse(f"Request has been sent to the administrators of {company.name}")
+
+#confirmation view accessed by company admin's email to confirm adding user to company
+@login_required
+def acceptJoinCompanyRequest(request,requestCode):
+    emailRequest = EmailRequest.objects.get(code=requestCode)
+    if emailRequest.recipientEmail != request.user.email:
+        raise ValueError("You are not authorized to accept this request.")
+    company = emailRequest.company
+    companyUser = CompanyUser(user=emailRequest.sender,company=company)
+    try:
+        companyUser.save()
+    except IntegrityError:
+        raise ValueError(f"User has already been added to {company}")
+    emailRequest.delete()
+    return HttpResponse(f"{emailRequest.sender.profile} successfully added to {company}")
+        
+@login_required
+def acceptCompanyInvite(request,invitationCode):
+    emailRequest = EmailRequest.objects.get(code=invitationCode)
+    company = emailRequest.company
+    companyUser = CompanyUser(user=request.user,company=company)
+    try:
+        companyUser.save()
+    except IntegrityError:
+        raise ValueError(f"User has already been added to {company}")
+    emailRequest.delete()
+    return redirect("/")
 
 
 def googleVerification(request):

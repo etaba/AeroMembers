@@ -11,7 +11,18 @@ USER:
     -see user post history
 
 COMPANY
-	-invite others from same company to join company account (invitee may or may not already have account)
+    -invite users (if admin)
+    -remove non-admin users (if admin)
+    -transfer/add admin role
+    -request to join
+
+NOTIFICATIONS
+    -removed from company
+    -accepted to company
+    -subscription payment pending, accepted, warning, overdue, expired, etc
+    -trial ended?
+    -invite user to join aeromember
+
 
 FORUM
     -collapse parent posts
@@ -36,6 +47,11 @@ STYLE:
     responsive?
     xbrowser support
     social media sharing
+
+UX:
+    typeahead for fields:
+        -join company request
+        
 
 BRAINTREE PAYMENTS
     -support for paypal, applepay, android pay, others

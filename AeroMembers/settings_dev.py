@@ -27,6 +27,12 @@ DEBUG = True
 
 ALLOWED_HOSTS = []
 
+# EMAIL_HOST = 'localhost'
+# EMAIL_PORT = 1025
+# EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+EMAIL_BACKEND = 'django.core.mail.backends.filebased.EmailBackend'
+EMAIL_FILE_PATH = 'testemails/'
+
 
 # Application definition
 
@@ -145,7 +151,7 @@ SOCIAL_AUTH_PIPELINE = (
     # 'AeroMembersApp.pipeline.set_session',
 )
 
-LOGIN_URL = 'login'
+LOGIN_URL = '/signin'
 LOGOUT_URL = 'index'
 LOGIN_REDIRECT_URL='/'
 

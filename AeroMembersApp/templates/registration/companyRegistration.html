@@ -2,27 +2,33 @@
 {%block content%}
 {%include 'header.html'%}
 <div class="container text-center" ng-controller="companyCtrl">
-<button ng-click="newCompany=true">Register New Company</button>
-<div ng-show="newCompany==true">
-  <form method="post" action="/companyregistration/">
-      {% csrf_token %}
-      {% for field in companyForm %}
-        <p>
-          {{ field.label_tag }}<br>
-          {{ field }}
-          {% for error in field.errors %}
-            <p style="color: red">{{ error }}</p>
-          {% endfor %}
-        </p>
-      {% endfor %}
-      <button class="btn btn-lg btn-primary btn-block btn-center" type="submit" data-bindattr-3="3">Save</button>
-  </form>
-</div>
-OR
-<button ng-click="newCompany=false">Join Existing Company</button>
-<div ng-show="newCompany==false">
-  <input type="text" ng-model="company" placeholder="Company Name">
-  <button ng-click="submit" ng-show="company!=undefined">Request Access</button>
-</div>
+  <div ng-show="showStart">
+    <button ng-click="newCompany=true; showStart=false" class="btn btn-lg btn-primary btn-block">New Company</button>
+    OR
+    <button ng-click="newCompany=false; showStart=false" class="btn btn-lg btn-primary btn-block">Join Existing Company</button>
+  </div>
+  <div ng-show="showAddForm()">
+    <h2>Register a New Company</h2>
+    <form method="post" action="/companyregistration/">
+        {% csrf_token %}
+        {% for field in companyForm %}
+          <p>
+            {{ field }}
+            {% for error in field.errors %}
+              <p style="color: red">{{ error }}</p>
+            {% endfor %}
+          </p>
+        {% endfor %}
+        <button class="btn btn-lg btn-primary btn-block" type="submit" data-bindattr-3="3">Save</button>
+    </form>
+  </div>
+  <div ng-show="showJoinForm()">
+    <h2>Join an Existing Company</h2>
+    <form method="post" action="/joincompany">
+            {% csrf_token %}
+      <input type="text" ng-model="company" placeholder="Company Name" name="company" class="form-control" uib-typeahead="company for company in companies|filter:$viewValue">
+      <br>
+    <button type="submit" class="btn btn-lg btn-primary btn-block">Request Access</button>
+  </div>
 </div>
 {%endblock%}

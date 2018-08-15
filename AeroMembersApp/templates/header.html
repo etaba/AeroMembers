@@ -14,7 +14,9 @@
                         <a href="#" class="nav-link dropdown-toggle" role="button" aria-haspopup="true" data-toggle="dropdown" aria-expanded="false">About <span class="caret"></span></a>
                         <div class="dropdown-menu">
                             <a class="dropdown-item" href="/termsofservice">Terms of Service</a>
-                            <a href="#" class="dropdown-item" onClick="alert('For questions or concerns email ???')">Contact</a>
+                            <a href="#" class="dropdown-item" onClick="alert('For questions or concerns email support@aeromembers.org')">Contact</a>
+                            <a href="/sendaeromemberinvite" class="dropdown-item" >Invite Others!</a>
+
                         </div>
                     </li>
                     <li class="nav-item">
@@ -51,6 +53,7 @@
                             <a href="/viewcompany/{{request.session.currCompany.company.id}}" class="dropdown-item">Details</a>
                             {% if request.session.currCompany.is_admin %}
                                 <a href="/subscribecompany/" class="dropdown-item">Manage Membership ({{ request.session.currCompany.plan.name }})</a>
+                                <a href="/managecompanymembers/{{request.session.currCompany.company.id}}" class="dropdown-item">Manage Users</a>
                                                             {% endif %}
                             {% if request.session.companies|length > 1 %}
                                 <a href="/setcompany" class="dropdown-item">Select Other Company</a>

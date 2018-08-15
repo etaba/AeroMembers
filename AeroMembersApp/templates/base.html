@@ -1,61 +1,71 @@
 <!DOCTYPE html>
 <html ng-app="myApp">
-	<head>
-		<meta charset="utf-8">
-		<meta name="viewport" content="width=device-width, initial-scale=1">
-		<!-- Latest AngularJS -->
-		<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.1/angular.min.js"></script>
-		
-		<!-- jQuery library -->
-		<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        
+        <!-- Latest AngularJS -->
+        <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.1/angular.min.js"></script>
+        
+        <!-- jQuery library -->
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+        <!-- Angular Bootstrap UI -->
+        <script src="https://angular-ui.github.io/bootstrap/ui-bootstrap-tpls-2.5.0.min.js"></script>
 
-		<!-- ngSanitize -->
-		<script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.6.1/angular-sanitize.js"></script>
-		<!-- ngSanitize -->
-		<script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.6.1/angular-cookies.js"></script>
-		<script src="https://npmcdn.com/tether@1.2.4/dist/js/tether.min.js"></script>
-		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.6/css/bootstrap.min.css" integrity="sha384-rwoIResjU2yc3z8GV/NPeZWAv56rSmLldC3R/AZzGRnGxQQKnKkoFVhFQhNUwEyJ" crossorigin="anonymous">
-		<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.6/js/bootstrap.min.js" integrity="sha384-vBWWzlZJ8ea9aCX4pEW3rVHjgjt7zpkNpZk+02D9phzyeVkE+jo0ieGizqPLForn" crossorigin="anonymous"></script>
-		<script src="https://use.fontawesome.com/a1406c6de2.js"></script>
-		<script src="https://js.braintreegateway.com/web/dropin/1.9.2/js/dropin.min.js"></script>
-		{% load static %}
+        <!-- ngSanitize -->
+        <script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.6.1/angular-sanitize.js"></script>
+        <!-- ngCookies -->
+        <script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.6.1/angular-cookies.js"></script>
+        <!-- ngAnimate -->
+        <script src="//ajax.googleapis.com/ajax/libs/angularjs/1.6.1/angular-animate.js"></script>
+        <!-- ngUI -->
+        <script src="https://angular-ui.github.io/bootstrap/ui-bootstrap-tpls-2.5.0.min.js"></script>
+        <!--not sure... -->
+        <script src="https://npmcdn.com/tether@1.2.4/dist/js/tether.min.js"></script>
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.6/css/bootstrap.min.css" integrity="sha384-rwoIResjU2yc3z8GV/NPeZWAv56rSmLldC3R/AZzGRnGxQQKnKkoFVhFQhNUwEyJ" crossorigin="anonymous">
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.6/js/bootstrap.min.js" integrity="sha384-vBWWzlZJ8ea9aCX4pEW3rVHjgjt7zpkNpZk+02D9phzyeVkE+jo0ieGizqPLForn" crossorigin="anonymous"></script>
+        <!-- font awesome, can probably be localized -->
+        <script src="https://use.fontawesome.com/a1406c6de2.js"></script>
+        <!-- Braintree -->
+        <script src="https://js.braintreegateway.com/web/dropin/1.9.2/js/dropin.min.js"></script>
+        {% load static %}
 
-		<!--hardcopies of dependicies-->
+        <!--hardcopies of dependicies-->
 <!--
-		<script src={% static "offlineJS/angular.min.js" %}></script>
-		<link rel="stylesheet" href={% static "offlineJS/bootstrap.min.css" %} type="text/css">
-		<script src={% static "offlineJS/jquery.min.js" %}></script>
-		<link rel="stylesheet" href={% static "offlineJS/a1406cde2.css" %} type="text/css">
-		<script src={% static "offlineJS/angular-sanitize.js" %}></script>
-		<script src={% static "offlineJS/angular-cookie.js" %}></script>
-		<script src={% static "offlineJS/tether.min.js" %}></script>
-		<script src={% static "offlineJS/bootstrap.min.js" %}></script>
-		<script src={% static "offlineJS/a1406cde2.js" %}></script>
+        <script src={% static "offlineJS/angular.min.js" %}></script>
+        <link rel="stylesheet" href={% static "offlineJS/bootstrap.min.css" %} type="text/css">
+        <script src={% static "offlineJS/jquery.min.js" %}></script>
+        <link rel="stylesheet" href={% static "offlineJS/a1406cde2.css" %} type="text/css">
+        <script src={% static "offlineJS/angular-sanitize.js" %}></script>
+        <script src={% static "offlineJS/angular-cookie.js" %}></script>
+        <script src={% static "offlineJS/tether.min.js" %}></script>
+        <script src={% static "offlineJS/bootstrap.min.js" %}></script>
+        <script src={% static "offlineJS/a1406cde2.js" %}></script>
 -->
 
-		<link rel="stylesheet" href={% static "styles.css" %} type="text/css">
+        <link rel="stylesheet" href={% static "styles.css" %} type="text/css">
 
 
-		<script src={% static "script.js" %}></script>
-		<link rel="stylesheet" href={% static "styles.css" %} type="text/css">
-	</head>
-	<body>
-		<main role='main' class="container">
-			{% block content %}{% endblock %}
-		</main>
-		<hr>
-		<footer class="bg-inverse footer container-fluid">
-			<div class="row">
-				<div class="col">
-					<a href="/termsofservice" class="text-muted">Terms of Service</a>
-				</div>
-				<div class="col">
-					<a href="/privacy" class="text-muted">Privacy Statement</a>
-				</div>
-				<div class="col">
-					  <a href="mailto:info@aeromembers.com" class="text-muted">info@aeromembers.com</a>
-				</div>
-			</div>
-		</footer>
-	</body>
+        <script src={% static "script.js" %}></script>
+        <link rel="stylesheet" href={% static "styles.css" %} type="text/css">
+    </head>
+    <body>
+        <main role='main' class="container">
+            {% block content %}{% endblock %}
+        </main>
+        <hr>
+        <footer class="bg-inverse footer container-fluid">
+            <div class="row">
+                <div class="col">
+                    <a href="/termsofservice" class="text-muted">Terms of Service</a>
+                </div>
+                <div class="col">
+                    <a href="/privacy" class="text-muted">Privacy Statement</a>
+                </div>
+                <div class="col">
+                      <a href="mailto:info@aeromembers.com" class="text-muted">info@aeromembers.com</a>
+                </div>
+            </div>
+        </footer>
+    </body>
 </html>

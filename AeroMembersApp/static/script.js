@@ -1,4 +1,4 @@
-var app = angular.module('myApp', ['ngSanitize','ngCookies']);
+var app = angular.module('myApp', ['ngSanitize','ngCookies','ui.bootstrap']);
 
 app.config(['$httpProvider', function($httpProvider) {
     $httpProvider.defaults.xsrfCookieName = 'csrftoken';
@@ -56,6 +56,18 @@ app.controller('forumCtrl', ['$scope', '$http', '$sce', '$cookies', '$document',
 app.controller('companyCtrl', ['$scope', '$http', '$sce', '$cookies', '$document', '$window', function($scope, $http, $sce, $cookies, $document, $window) {
     init = function(){
         $scope.newCompany = false;
+        $scope.showStart = true;
+        $http.get('/getcompanies').then(function success(response){
+            $scope.companies = response.data
+        })
+    }
+
+    $scope.showAddForm = function(){
+        return $scope.newCompany && !$scope.showStart
+    }
+
+    $scope.showJoinForm = function(){
+        return !$scope.newCompany && !$scope.showStart
     }
 
     init()
@@ -343,4 +355,64 @@ app.controller('checkoutCtrl', ['$scope','$http',function($scope,$http){
 
     init()
     
+}]);
+
+app.controller('dynamicGridCtrl', ['$scope', '$http', '$sce', '$cookies', '$document', '$window', function($scope, $http, $sce, $cookies, $document, $window) {
+    function init(){
+        $http.get('members/').then(function success(response){
+            $scope.members = response.data
+        })
+    }
+    $scope.invitees = [{}]
+    $scope.companyMembers = []
+    var changes = []
+
+    $scope.addInput = function(){
+        $scope.invitees.push({})
+    }
+    $scope.submit = function(url){
+        $scope.invitees = $scope.invitees.filter(invitee => Object.keys(invitee).length > 1)
+        $http.post(url,{'invitees':$scope.invitees}).then(function success(){
+            alert("Invites successfully sent to "+$scope.invitees.map(invitee => invitee.email).join(', '))
+        }), function error(response){
+            alert(response.data)
+        }
+    }
+
+    $scope.addRow = function(entry){
+        newRow = {'email':entry.email,'isAdmin':entry.isAdmin,'action':'ADD'}
+        $scope.members.push(newRow)
+        changes.push(newRow)
+    }
+
+    $scope.removeRow = function(i){
+        if($scope.members[i].action == undefined){
+            changes.push({'email':$scope.members[i].email, 'action':'REMOVE'})
+        }
+        $scope.members.splice(i,1)
+    }    
+
+    $scope.editRow = function(email,isAdmin){
+        found = false
+        changes.forEach(function(change){
+            if (change.email == email){
+                change.isAdmin = isAdmin
+                found = true
+                break
+            }
+        })
+        if(!found){
+            changes.push({'email':email, 'isAdmin':isAdmin, 'action':'EDIT'})
+        }
+    }
+
+    $scope.save = function(){
+        $http.post('',changes).then(function success(response){
+            alert('Changes have been saved')
+        }, function error(response){
+            alert(response.data)
+        })
+    }
+
+    init()
 }]);

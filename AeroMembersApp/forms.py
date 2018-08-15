@@ -78,11 +78,18 @@ class ThreadForm(BaseForm):
     class Meta:
         model = Thread
         fields = ('title','content','threadType')
+        widgets = {
+            'title': forms.TextInput(attrs={'placeholder':'Title'}),
+            'content': forms.TextInput(attrs={'placeholder':'Description'}),
+        }
 
 class ThreadCommentForm(BaseForm):
     class Meta:
         model = Post
         fields = ('content',)
+        widgets = {
+            'content': forms.TextInput(attrs={'placeholder':'Enter a new comment here'}),
+        }
 
 class FancyPasswordChangeForm(PasswordChangeForm):
     def __init__(self, *args, **kwargs):

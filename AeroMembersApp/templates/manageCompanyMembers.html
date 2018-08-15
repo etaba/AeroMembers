@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{%block content%}
+{%include 'header.html'%}
+{%verbatim%}
+<div class="container text-center" ng-controller="dynamicGridCtrl">
+        <div class="Row">
+            <div class="Column">
+                <input type="text" 
+                       ng-model="entry.email" 
+                       placeholder="Email" 
+                       class="form-control">
+            </div>
+            <div class="Column">
+                <button ng-click="addRow(entry)" 
+                        class="btn add-button">
+                        Add
+                </button>
+            </div>
+        </div>
+        <br>
+        <div class="container"  >
+            <table class="table">
+                <thead >
+                    <tr ng-show="members.length > 0">
+                        <th style="width:4%"></th>
+                        <th style="width:32%">
+                            <h4>Name</h4>
+                        </th>
+                        <th style="width:32%">
+                            <h4>Email</h4>
+                        </th>
+                        <th style="width:32%">
+                            <h4>Administrator</h4>
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr ng-repeat="m in members"
+                        ng-click="modifyRow=true;">
+                        <td style="width:4%">
+                            <button ng-click="removeRow($index)" class="btn btn-danger btn-xs" title="Remove">
+                            <span class="fa fa-remove"></span>
+                            </button>
+                        </td>
+                        <td style="width:32%">
+                            {{ m.name }}
+                        </td>
+                        <td style="width:32%">
+                            {{ m.email }}
+                        </td>
+                        <td style="width:32%">
+                            <input type="checkbox" ng-model="m.isAdmin" ng-click="editRow(m.email,m.isAdmin)">
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            <button ng-click="save()" class="btn btn-lg btn-primary btn-block">Save Changes</button>
+        </div>
+  <br>
+</div>
+{%endverbatim%}
+{%endblock%}
+
