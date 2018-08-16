@@ -885,8 +885,8 @@ def sendJoinCompanyRequest(request):
             duplicateRequest = EmailRequest.objects.filter(code=requestCode)
             if not duplicateRequest.exists():
                 break
-        link = f"https://www.aeromembers.org/acceptrequest/{requestCode}"
-        plan = company.subscription.get().plan
+        link = f"https://www.aeromembers.org/acceptjoinrequest/{requestCode}"
+        plan = company.subscription.get(status='active').plan
         context = {'link':link,
                     'requester':f"{request.user.profile} ({request.user.email})",
                     'company':company.name,
@@ -909,7 +909,8 @@ def sendJoinCompanyRequest(request):
 @login_required
 def acceptJoinCompanyRequest(request,requestCode):
     emailRequest = EmailRequest.objects.get(code=requestCode)
-    if emailRequest.recipientEmail != request.user.email:
+    import pdb; pdb.set_trace()
+    if request.user.email not in emailRequest.recipientEmail:
         raise ValueError("You are not authorized to accept this request.")
     company = emailRequest.company
     companyUser = CompanyUser(user=emailRequest.sender,company=company)

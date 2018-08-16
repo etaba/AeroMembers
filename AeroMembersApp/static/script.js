@@ -365,6 +365,7 @@ app.controller('dynamicGridCtrl', ['$scope', '$http', '$sce', '$cookies', '$docu
     }
     $scope.invitees = [{}]
     $scope.companyMembers = []
+    $scope.invites = []
     var changes = []
 
     $scope.addInput = function(){
@@ -379,10 +380,13 @@ app.controller('dynamicGridCtrl', ['$scope', '$http', '$sce', '$cookies', '$docu
         }
     }
 
-    $scope.addRow = function(entry){
-        newRow = {'email':entry.email,'isAdmin':entry.isAdmin,'action':'ADD'}
-        $scope.members.push(newRow)
-        changes.push(newRow)
+    $scope.sendInvite = function(email){
+        addData = [{'email':email,'action':'ADD'}]
+        $http.post('',addData).then(function success(response){
+            $scope.invites.push(email)
+        }, function error(response){
+            alert(response.data)
+        })
     }
 
     $scope.removeRow = function(i){

@@ -3,22 +3,24 @@
 {%include 'header.html'%}
 {%verbatim%}
 <div class="container text-center" ng-controller="dynamicGridCtrl">
-        <div class="Row">
-            <div class="Column">
-                <input type="text" 
-                       ng-model="entry.email" 
-                       placeholder="Email" 
-                       class="form-control">
-            </div>
-            <div class="Column">
-                <button ng-click="addRow(entry)" 
-                        class="btn add-button">
-                        Add
-                </button>
-            </div>
-        </div>
+        <h2>Invite others to join company plan</h2>
+        <input type="email"
+               ng-model="email" 
+               placeholder="Email" 
+               class="form-control">
         <br>
-        <div class="container"  >
+        <button ng-click="sendInvite(email)" 
+                class="btn btn-lgdd btn-primary btn-block">
+                Send
+        </button>
+        <br>
+        <div ng-show="invites.length > 0">
+            Invites sent to:
+            <div ng-repeat="invite in invites">{{invite}}</div>
+        </div>
+        <div class="container">
+            <br>
+            <h2>Manage Current Users</h2>
             <table class="table">
                 <thead >
                     <tr ng-show="members.length > 0">
