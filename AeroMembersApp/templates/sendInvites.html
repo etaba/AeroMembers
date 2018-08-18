@@ -1,14 +1,12 @@
 {% extends "base.html" %}
 {%block content%}
 {%include 'header.html'%}
-<div class="container text-center" ng-controller="dynamicGridCtrl">
-	Enter the emails of the friends you'd like to invite
-	<div ng-repeat="invitee in invitees">
-  	<input type="text" placeholder="Email" class="form-control" ng-model="invitee.email">
-  	<br>
-  </div>
-  <br>
-  <button ng-click="addInput()" class="btn btn-lg btn-primary btn-block">Add Another</button>
-  <button ng-click="submit('/sendaeromemberinvite')" class="btn btn-lg btn-primary btn-block">Send Invites</button>
+<div class="container text-center">
+    Enter the email of the friend you'd like to invite
+    <form method="post" action="/sendaeromemberinvite">
+        {% csrf_token %}
+        <input type="email" placeholder="Email" class="form-control" name="email">
+    <button type="submit">Send Invite</button>
+  </form>
 </div>
 {%endblock%}

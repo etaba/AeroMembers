@@ -357,28 +357,15 @@ app.controller('checkoutCtrl', ['$scope','$http',function($scope,$http){
     
 }]);
 
-app.controller('dynamicGridCtrl', ['$scope', '$http', '$sce', '$cookies', '$document', '$window', function($scope, $http, $sce, $cookies, $document, $window) {
+app.controller('manageCompanyUsersCtrl', ['$scope', '$http', '$sce', '$cookies', '$document', '$window', function($scope, $http, $sce, $cookies, $document, $window) {
     function init(){
         $http.get('members/').then(function success(response){
             $scope.members = response.data
         })
     }
-    $scope.invitees = [{}]
     $scope.companyMembers = []
     $scope.invites = []
     var changes = []
-
-    $scope.addInput = function(){
-        $scope.invitees.push({})
-    }
-    $scope.submit = function(url){
-        $scope.invitees = $scope.invitees.filter(invitee => Object.keys(invitee).length > 1)
-        $http.post(url,{'invitees':$scope.invitees}).then(function success(){
-            alert("Invites successfully sent to "+$scope.invitees.map(invitee => invitee.email).join(', '))
-        }), function error(response){
-            alert(response.data)
-        }
-    }
 
     $scope.sendInvite = function(email){
         addData = [{'email':email,'action':'ADD'}]

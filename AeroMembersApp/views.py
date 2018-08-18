@@ -853,7 +853,7 @@ def applyDiscount(request):
 def sendAeroMemberInvite(request):
     #make sure user doesnt already exist?
     if request.method == 'POST':
-        postData = json.loads(request.body)
+        #postData = json.loads(request.body)
         html = get_template('emailTemplates/aeromemberInvite.html')
         link = f"https://www.aeromembers.org/signup"
         context = {'link':link,
@@ -863,7 +863,8 @@ def sendAeroMemberInvite(request):
 
         subject = f"{request.user.first_name} {request.user.last_name} has invited you to try AeroMembers"
         from_email = 'AeroMembers <noreply@aeromembers.org>'
-        to = [[invitee['email'] for invitee in postData['invitees']]]
+        #to = [[invitee['email'] for invitee in postData['invitees']]]
+        to = [request.POST['email']]
         msg = EmailMessage(subject, html_content, from_email, to)
         msg.content_subtype = "html"  # Main content is now text/html
         msg.send()
