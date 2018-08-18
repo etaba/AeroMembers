@@ -152,7 +152,7 @@ SOCIAL_AUTH_PIPELINE = (
 )
 
 LOGIN_URL = '/signin'
-LOGOUT_URL = 'index'
+LOGOUT_URL = '/'
 LOGIN_REDIRECT_URL='/'
 
 

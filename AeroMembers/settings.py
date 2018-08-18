@@ -158,8 +158,8 @@ SOCIAL_AUTH_PIPELINE = (
     # 'AeroMembersApp.pipeline.set_session',
 )
 
-LOGIN_URL = 'login'
-LOGOUT_URL = 'index'
+LOGIN_URL = '/signin'
+LOGOUT_URL = '/'
 LOGIN_REDIRECT_URL='/'
 
 
