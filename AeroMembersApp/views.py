@@ -868,7 +868,7 @@ def sendAeroMemberInvite(request):
         msg = EmailMessage(subject, html_content, from_email, to)
         msg.content_subtype = "html"  # Main content is now text/html
         msg.send()
-        return HttpResponse()
+        return HttpResponse(f"Invite sent to {request.POST['email']}")
     if request.method == 'GET':
         return render(request,'sendInvites.html')
 

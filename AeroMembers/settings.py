@@ -21,10 +21,9 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.environ.get('AEROMEMBERS_SECRET_KEY');
-SECRET_KEY = 'coh6l+-bwqssb5cb%gdtl#lby9m!%wqvv9fusd3ynt3g1=-&_#'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
 ALLOWED_HOSTS = ['www.aeromembers.com',
                  'aeromembers.com',
@@ -37,7 +36,7 @@ ALLOWED_HOSTS = ['www.aeromembers.com',
 
 EMAIL_HOST = 'sub5.mail.dreamhost.com'
 EMAIL_PORT = 587
-EMAIL_HOST_USER = 'support@aeromembers.com'
+EMAIL_HOST_USER = 'support@aeromembers.org'
 EMAIL_HOST_PASSWORD = os.environ.get('AEROMEMBERS_EMAIL_PASS')
 EMAIL_USE_TLS = True
 
