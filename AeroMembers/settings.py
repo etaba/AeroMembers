@@ -23,7 +23,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SECRET_KEY = os.environ.get('AEROMEMBERS_SECRET_KEY');
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = ['www.aeromembers.com',
                  'aeromembers.com',
@@ -34,6 +34,8 @@ ALLOWED_HOSTS = ['www.aeromembers.com',
                  'www.aeromembers.info',
                  'aeromembers.info']
 
+SERVER_EMAIL = 'support@aeromembers.org'
+ADMINS = (('Eric Taba', 'eptaba@gmail.com'),)
 EMAIL_HOST = 'sub5.mail.dreamhost.com'
 EMAIL_PORT = 587
 EMAIL_HOST_USER = 'support@aeromembers.org'
