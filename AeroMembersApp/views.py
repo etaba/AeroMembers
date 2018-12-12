@@ -131,7 +131,7 @@ def companyRegistration(request):
             return redirect('subscribecompany')
     else:
         companyForm = CompanyForm()
-    return render(request, 'registration/companyregistration.html',{'companyForm':companyForm})
+    return render(request, 'registration/companyRegistration.html',{'companyForm':companyForm})
 
 @login_required
 def manageCompanyMembers(request,companyId):
@@ -455,8 +455,7 @@ def viewUser(request,userId):
     profile = Profile.objects.filter(user=user)
     if profile.exists():
         context['private'] = profile.get().private
-    companies = map(lambda uc: uc.company, CompanyUser.objects.filter(user=user))
-    context['companies'] = companies
+    context['companies'] = [uc.company for uc in CompanyUser.objects.filter(user=user)]
     return render(request, 'viewUser.html',context);
 
 @login_required
@@ -470,16 +469,6 @@ def checkout(request):
         )
     )
     if request.method == "GET":
-        #try:
-        #    customer = gateway.customer.find(str(request.user.pk))
-        #    context['paymentMethods'] = {'creditCards':[],'paypal':[],'applepay':[],'androidpay':[]}
-        #    for pm in customer.payment_methods:
-        #        if pm.__class__ == braintree.credit_card.CreditCard:
-        #            context['paymentMethods']['creditCards'].append(pm)
-        #        if pm.__class__ == braintree.paypal_account.PayPalAccount:
-        #            context['paymentMethods']['paypal'].append(pm)
-        #except braintree.exceptions.unexpected_error.UnexpectedError:
-        #    pass
         return render(request, 'checkout.html')
     elif request.method == "POST":
         postData = json.loads(request.body)

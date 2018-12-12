@@ -50,7 +50,7 @@ class Profile(models.Model):
     birthdate = models.DateTimeField('date of birth', null=True, blank = True, help_text="Will not be visible to other users.")
     private = models.BooleanField(help_text="Keep personal information hidden from other users. Only your username will be visible.",default=False)
 
-    def __str__(self):
+    def __repr__(self):
         return '%s %s' % (self.user.first_name, self.user.last_name)
 
 class Contact(models.Model):
@@ -112,7 +112,7 @@ class Company(models.Model):
     activity_type = models.CharField(max_length = 200, choices=ACTIVITY_TYPE)
     naics = models.IntegerField()
     description = models.TextField(max_length=1000, blank=True)
-    def __str__(self):
+    def __repr__(self):
         return self.name
 
 '''
@@ -151,6 +151,8 @@ class Post(models.Model):
         self.parent = parent
         self.content = content
         self.createdBy = createdBy
+    def __repr__(self):
+        return f"Post({self.createdBy},{self.content})"
     def __str__(self):
         return self.content 
 
@@ -168,6 +170,8 @@ class Thread(Post):
     status = models.CharField(max_length=200,choices=STATUS,default="O")
     threadType = models.CharField(max_length=200,choices=TYPE)
     tags = models.ManyToManyField('Tag',blank=True)
+    def __repr__(self):
+        return f"Thread({self.title},{self.threadType})"
     def __str__(self):
         return self.title
 
@@ -181,7 +185,7 @@ class Tag(models.Model):
     name = models.CharField(max_length=200)
     description = models.TextField(max_length=1000)
     threads = models.ManyToManyField('Thread')
-    def __str__(self):
+    def __repr__(self):
         return self.name
 
 class Order(models.Model):
@@ -218,8 +222,8 @@ class Subscription(models.Model):
     discount = models.OneToOneField('Discount',related_name='discount',on_delete=models.DO_NOTHING,null=True)
     def totalPrice(self):
         return self.plan.monthlyRate - (self.plan.monthlyRate * (self.discount.rate if self.discount != None else 0))
-    # class Meta:
-    #     unique_together = ('user','plan','status')
+    def __repr__(self):
+        return f"Subscription({self.company if self.company else self.user},{self.plan},{self.discount})"
 
 class Plan(models.Model):
     name = models.CharField(max_length=200)
@@ -227,6 +231,10 @@ class Plan(models.Model):
     monthlyRate = models.FloatField()
     description = models.TextField()
     braintreeID = models.CharField(max_length=200)
+    def __repr__(self):
+        return f"Plan({self.name},{self.type})"
+    def __str__(self):
+        return self.name
 
 class Discount(models.Model):
     code = models.CharField(max_length=200,unique=True)
